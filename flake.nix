@@ -44,6 +44,15 @@
         };
         flake = pkgs.hsPkgs.flake { };
       in
-      flake // { defaultPackage = flake.packages."purenix:exe:purenix-exe"; }
+      flake // {
+        defaultPackage = flake.packages."purenix:exe:purenix-exe";
+
+        devShell = flake.devShell.overrideAttrs (oldAttrs: {
+          nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ [
+            pkgs.purescript
+            pkgs.spago
+          ];
+        });
+      }
     );
 }
