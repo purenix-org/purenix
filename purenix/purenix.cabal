@@ -1,4 +1,4 @@
-cabal-version:   2.4
+cabal-version:   3.0
 name:            purenix
 version:         0
 license:         BSD-3-Clause
@@ -17,8 +17,8 @@ extra-doc-files:
   README.md
 
 source-repository head
-type:     git
-location: git://github.com/cdepillabout/cabal2nixWithoutIFD.git
+  type:     git
+  location: git://github.com/cdepillabout/cabal2nixWithoutIFD.git
 
 common common-options
   build-depends:    base >=4.9 && <5

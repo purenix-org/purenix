@@ -11,8 +11,8 @@
         overlay = self: _: {
           hsPkgs =
             self.haskell-nix.project' rec {
-              src = ./.;
-              compiler-nix-name = "ghc8105";
+              src = ./purenix;
+              compiler-nix-name = "ghc8104";
               shell = {
                 tools = {
                   cabal = { };
