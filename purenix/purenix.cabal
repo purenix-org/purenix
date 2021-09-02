@@ -4,21 +4,21 @@ version:         0
 license:         BSD-3-Clause
 build-type:      Simple
 license-file:    LICENSE
-author:          Dennis Gosnell
+-- category:
+-- description:     description
+-- synopsis:        one-line synopsis
+author:          Dennis Gosnell, Jonas Carpay
 maintainer:      Dennis Gosnell <cdep.illabout@gmail.com>
-copyright:       2021 Dennis Gosnell
+copyright:       2021 Dennis Gosnell, Jonas Carpay
+homepage:        https://github.com/cdepillabout/cabal2nixWithoutIFD
 tested-with:     GHC ==8.6.3 || ==8.8.3 || ==8.10.5
 extra-doc-files:
   CHANGELOG.md
   README.md
 
--- category:
--- description:     description
--- synopsis:        one-line synopsis
--- homepage:        https://github.com/FIXME/purenix#readme
--- source-repository head
---   type:     git
---   location: git://github.com/FIXME/purenix.git
+source-repository head
+type:     git
+location: git://github.com/cdepillabout/cabal2nixWithoutIFD.git
 
 common common-options
   build-depends:    base >=4.9 && <5
@@ -35,6 +35,7 @@ library
   build-depends:
     , containers
     , mtl
+    , purescript  ==0.14.4
 
 executable purenix-exe
   import:         common-options
