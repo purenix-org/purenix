@@ -68,9 +68,15 @@ jobs:
       # We don't want to run stack init, because that overwrites the stack.yaml that we need to use.
       # - run: stack init --resolver ${{ matrix.resolver }}
 
-      - run: stack build --resolver ${{ matrix.resolver }} --only-dependencies
-      - run: stack build --resolver ${{ matrix.resolver }}
-      - run: stack build --resolver ${{ matrix.resolver }} --haddock --test --bench --no-run-benchmarks
+      - run: |
+          cd purenix
+          stack build --resolver ${{ matrix.resolver }} --only-dependencies
+      - run: |
+          cd purenix
+          stack build --resolver ${{ matrix.resolver }}
+      - run: |
+          cd purenix
+          stack build --resolver ${{ matrix.resolver }} --haddock --test --bench --no-run-benchmarks
 
   cabal-build:
     name: Cabal GHC ${{ matrix.ghc }} on ${{ matrix.os }} (${{ matrix.required }})
@@ -103,6 +109,12 @@ jobs:
             ~/.cabal
             dist-newstyle
           key: cabal-cache-${{ matrix.os }}-${{ matrix.ghc }}-${{ hashFiles('**/*.cabal') }}
-      - run: cabal new-build --only-dependencies
-      - run: cabal new-build
-      - run: cabal new-test --test-show-details=direct
+      - run: |
+          cd purenix
+          cabal new-build --only-dependencies
+      - run: |
+          cd purenix
+          cabal new-build
+      - run: |
+          cd purenix
+          cabal new-test --test-show-details=direct
