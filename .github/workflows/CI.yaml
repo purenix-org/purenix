@@ -64,7 +64,10 @@ jobs:
       #       ~/.stack
       #       .stack-work
       #     key: stack-cache-${{ matrix.os }}-${{ matrix.resolver }}-${{ hashFiles('**/*.cabal') }}
-      - run: stack init --resolver ${{ matrix.resolver }}
+
+      # We don't want to run stack init, because that overwrites the stack.yaml that we need to use.
+      # - run: stack init --resolver ${{ matrix.resolver }}
+
       - run: stack build --resolver ${{ matrix.resolver }} --only-dependencies
       - run: stack build --resolver ${{ matrix.resolver }}
       - run: stack build --resolver ${{ matrix.resolver }} --haddock --test --bench --no-run-benchmarks
