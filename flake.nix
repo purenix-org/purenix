@@ -11,6 +11,7 @@
         overlay = self: _: {
           hsPkgs =
             self.haskell-nix.project' rec {
+              projectFileName = "stack.yaml";
               src = ./purenix;
               compiler-nix-name = "ghc8104";
               shell = {
