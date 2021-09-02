@@ -4,37 +4,46 @@ on: push
 
 jobs:
 
-  nix-build:
-    name: Nix build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2.3.4
-      - uses: cachix/install-nix-action@v13
-        with:
-          install_url: https://nixos-nix-install-tests.cachix.org/serve/i6laym9jw3wg9mw6ncyrk6gjx4l34vvx/install
-          install_options: '--tarball-url-prefix https://nixos-nix-install-tests.cachix.org/serve'
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-      - uses: cachix/cachix-action@v8
-        with:
-          name: jmc
-          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-      - name: Build PKGNAME
-        run: nix build -L
-      # TODO `nix flake check` is currently system-dependent but should be used here
-      - name: Build PKGNAME checks
-        run: nix build -L '.#checks.x86_64-linux."PKGNAME:test:PKGNAME-test"'
-      - name: Build PKGNAME shell
-        run: nix build -L '.#devShell.x86_64-linux'
+  # TODO: I don't expect the nix build to finish in a reasonable amount of time unless we setup a cache.
+  # nix-build:
+  #   name: Nix build
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2.3.4
+  #     - uses: cachix/install-nix-action@v13
+  #       with:
+  #         install_url: https://nixos-nix-install-tests.cachix.org/serve/i6laym9jw3wg9mw6ncyrk6gjx4l34vvx/install
+  #         install_options: '--tarball-url-prefix https://nixos-nix-install-tests.cachix.org/serve'
+  #         extra_nix_config: |
+  #           experimental-features = nix-command flakes
+  #           # access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+  #     # - uses: cachix/cachix-action@v8
+  #     #   with:
+  #     #     name: jmc
+  #     #     authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+  #     - name: Build purenix
+  #       run: nix build -L
+  #     # TODO `nix flake check` is currently system-dependent but should be used here
+  #     - name: Build purenix checks
+  #       run: nix build -L '.#checks.x86_64-linux."purenix:test:purenix-test"'
+  #     - name: Build PKGNAME shell
+  #       run: nix build -L '.#devShell.x86_64-linux'
 
   stack-build:
     name: Stack ${{ matrix.resolver }} on ${{ matrix.os }} (${{ matrix.required }})
     strategy:
       fail-fast: false
       matrix:
-        resolver: [ nightly, lts-18, lts-17, lts-16, lts-15, lts-14 ]
-        os: [ macos-latest, ubuntu-latest ]
+        resolver:
+          # - nightly
+          # - lts-18
+          - lts-17
+          # - lts-16
+          # - lts-15
+          # - lts-14
+        os:
+          # - macos-latest
+          - ubuntu-latest
         required: [ required ]
         # include:
         #   - resolver: nightly
@@ -44,9 +53,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
+
       - uses: haskell/actions/setup@v1
         with:
           enable-stack: true
+
       ## For some reason, stack caching seems to be very brittle, and cause a lot of build failures.
       ## I haven't investigated very thoroughly what to best do about this, but for now, I'm just not caching stack builds.
       # - uses: actions/cache@v2
@@ -55,36 +66,71 @@ jobs:
       #       ~/.stack
       #       .stack-work
       #     key: stack-cache-${{ matrix.os }}-${{ matrix.resolver }}-${{ hashFiles('**/*.cabal') }}
-      - run: stack init --resolver ${{ matrix.resolver }}
-      - run: stack build --resolver ${{ matrix.resolver }} --only-dependencies
-      - run: stack build --resolver ${{ matrix.resolver }}
-      - run: stack build --resolver ${{ matrix.resolver }} --haddock --test --bench --no-run-benchmarks
+
+      # We don't want to run stack init, because that overwrites the stack.yaml that we need to use.
+      # - name: Initialize stack.yaml for ${{ matrix.resolver }}
+      #   run: stack init --resolver ${{ matrix.resolver }}
+
+      - name: Build dependencies
+        run: |
+          cd purenix
+          stack build --resolver ${{ matrix.resolver }} --only-dependencies
+
+      - name: Build purenix
+        run: |
+          cd purenix
+          stack build --resolver ${{ matrix.resolver }}
+
+      - name: Run tests
+        run: |
+          cd purenix
+          stack build --resolver ${{ matrix.resolver }} --haddock --test --bench --no-run-benchmarks
 
   cabal-build:
     name: Cabal GHC ${{ matrix.ghc }} on ${{ matrix.os }} (${{ matrix.required }})
     strategy:
       fail-fast: false
       matrix:
-        ghc: [ '8.6.5', '8.8.3', '8.10.5', '9.0.1' ]
-        os: [ ubuntu-latest, macos-latest ]
+        ghc:
+          # - '8.6.5'
+          # - '8.8.3'
+          - '8.10.4'
+          # - '9.0.1'
+        os:
+          - ubuntu-latest
+          # - macos-latest
         required: [ required ]
-        include:
-          - ghc: latest
-            os: ubuntu-latest
-            required: optional
+        # include:
+        #   - ghc: latest
+        #     os: ubuntu-latest
+        #     required: optional
     continue-on-error: ${{ matrix.required == 'optional' }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
+
       - uses: haskell/actions/setup@v1
         with:
           ghc-version: ${{ matrix.ghc }}
+
       - uses: actions/cache@v2
         with:
           path: |
             ~/.cabal
             dist-newstyle
           key: cabal-cache-${{ matrix.os }}-${{ matrix.ghc }}-${{ hashFiles('**/*.cabal') }}
-      - run: cabal new-build --only-dependencies
-      - run: cabal new-build
-      - run: cabal new-test --test-show-details=direct
+
+      - name: Build dependencies
+        run: |
+          cd purenix
+          cabal new-build --only-dependencies
+
+      - name: Build purenix
+        run: |
+          cd purenix
+          cabal new-build
+
+      - name: Run tests
+        run: |
+          cd purenix
+          cabal new-test --test-show-details=direct
