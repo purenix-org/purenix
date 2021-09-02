@@ -53,9 +53,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
+
       - uses: haskell/actions/setup@v1
         with:
           enable-stack: true
+
       ## For some reason, stack caching seems to be very brittle, and cause a lot of build failures.
       ## I haven't investigated very thoroughly what to best do about this, but for now, I'm just not caching stack builds.
       # - uses: actions/cache@v2
@@ -66,15 +68,21 @@ jobs:
       #     key: stack-cache-${{ matrix.os }}-${{ matrix.resolver }}-${{ hashFiles('**/*.cabal') }}
 
       # We don't want to run stack init, because that overwrites the stack.yaml that we need to use.
-      # - run: stack init --resolver ${{ matrix.resolver }}
+      # - name: Initialize stack.yaml for ${{ matrix.resolver }}
+      #   run: stack init --resolver ${{ matrix.resolver }}
 
-      - run: |
+      - name: Build dependencies
+        run: |
           cd purenix
           stack build --resolver ${{ matrix.resolver }} --only-dependencies
-      - run: |
+
+      - name: Build purenix
+        run: |
           cd purenix
           stack build --resolver ${{ matrix.resolver }}
-      - run: |
+
+      - name: Run tests
+        run: |
           cd purenix
           stack build --resolver ${{ matrix.resolver }} --haddock --test --bench --no-run-benchmarks
 
@@ -100,21 +108,29 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
+
       - uses: haskell/actions/setup@v1
         with:
           ghc-version: ${{ matrix.ghc }}
+
       - uses: actions/cache@v2
         with:
           path: |
             ~/.cabal
             dist-newstyle
           key: cabal-cache-${{ matrix.os }}-${{ matrix.ghc }}-${{ hashFiles('**/*.cabal') }}
-      - run: |
+
+      - name: Build dependencies
+        run: |
           cd purenix
           cabal new-build --only-dependencies
-      - run: |
+
+      - name: Build purenix
+        run: |
           cd purenix
           cabal new-build
-      - run: |
+
+      - name: Run tests
+        run: |
           cd purenix
           cabal new-test --test-show-details=direct
