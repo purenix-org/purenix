@@ -1,12 +1,12 @@
 cabal-version:   2.4
-name:            PKGNAME
+name:            purenix
 version:         0
 license:         BSD-3-Clause
 build-type:      Simple
 license-file:    LICENSE
-author:          AUTHNAME
-maintainer:      AUTHNAME <EMAIL>
-copyright:       CURRENTYEAR AUTHNAME
+author:          Dennis Gosnell
+maintainer:      Dennis Gosnell <cdep.illabout@gmail.com>
+copyright:       2021 Dennis Gosnell
 tested-with:     GHC ==8.6.3 || ==8.8.3 || ==8.10.5
 extra-doc-files:
   CHANGELOG.md
@@ -15,10 +15,10 @@ extra-doc-files:
 -- category:
 -- description:     description
 -- synopsis:        one-line synopsis
--- homepage:        https://github.com/FIXME/PKGNAME#readme
+-- homepage:        https://github.com/FIXME/purenix#readme
 -- source-repository head
 --   type:     git
---   location: git://github.com/FIXME/PKGNAME.git
+--   location: git://github.com/FIXME/purenix.git
 
 common common-options
   build-depends:    base >=4.9 && <5
@@ -36,14 +36,14 @@ library
     , containers
     , mtl
 
-executable PKGNAME-exe
+executable purenix-exe
   import:         common-options
   hs-source-dirs: app
   main-is:        Main.hs
-  build-depends:  PKGNAME
+  build-depends:  purenix
   ghc-options:    -threaded -rtsopts -with-rtsopts=-N
 
-test-suite PKGNAME-test
+test-suite purenix-test
   import:         common-options
   type:           exitcode-stdio-1.0
   hs-source-dirs: test
@@ -51,18 +51,18 @@ test-suite PKGNAME-test
   build-depends:
     , hspec
     , HUnit
-    , PKGNAME
+    , purenix
     , QuickCheck
 
   ghc-options:    -threaded -rtsopts -with-rtsopts=-N
 
-benchmark PKGNAME-bench
+benchmark purenix-bench
   import:         common-options
   type:           exitcode-stdio-1.0
   hs-source-dirs: bench
   main-is:        Main.hs
   build-depends:
     , criterion
-    , PKGNAME
+    , purenix
 
   ghc-options:    -threaded -rtsopts -with-rtsopts=-N

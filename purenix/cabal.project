@@ -1,5 +1,5 @@
 packages:
   ./
 
-package PKGNAME
+package purenix
   tests: True

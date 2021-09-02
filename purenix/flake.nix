@@ -1,5 +1,5 @@
 {
-  description = "PKGNAME";
+  description = "purenix";
 
   inputs.haskellNix.url = "github:input-output-hk/haskell.nix";
   inputs.nixpkgs.follows = "haskellNix/nixpkgs-unstable";
@@ -43,6 +43,6 @@
         };
         flake = pkgs.hsPkgs.flake { };
       in
-      flake // { defaultPackage = flake.packages."PKGNAME:exe:PKGNAME-exe"; }
+      flake // { defaultPackage = flake.packages."purenix:exe:purenix-exe"; }
     );
 }

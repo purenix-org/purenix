@@ -4,13 +4,13 @@ cradle:
     #   config: {cradle: {none: }}
 
     - path: "src"
-      config: {cradle: {cabal: {component: "lib:PKGNAME"}}}
+      config: {cradle: {cabal: {component: "lib:purenix"}}}
 
     - path: "app"
-      config: {cradle: {cabal: {component: "PKGNAME:PKGNAME-exe"}}}
+      config: {cradle: {cabal: {component: "purenix:purenix-exe"}}}
 
     - path: "test"
-      config: {cradle: {cabal: {component: "PKGNAME:PKGNAME-test"}}}
+      config: {cradle: {cabal: {component: "purenix:purenix-test"}}}
 
     - path: "bench"
-      config: {cradle: {cabal: {component: "PKGNAME:PKGNAME-bench"}}}
+      config: {cradle: {cabal: {component: "purenix:purenix-bench"}}}
