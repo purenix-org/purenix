@@ -91,7 +91,7 @@ expr (Var ann (P.Qualified Nothing i)) = localAnn ann $ N.var <$> ident i
 expr (Var ann (P.Qualified (Just (P.ModuleName m)) i)) = localAnn ann $ N.sel (N.sel (N.var "import") m) <$> ident i
 expr (Accessor ann sel body) = localAnn ann $ flip N.sel (P.prettyPrintObjectKey sel) <$> expr body
 expr (Let ann binds body) = localAnn ann $ liftA2 N.let' (bindings binds) (expr body)
-expr (ObjectUpdate ann a b) = localAnn ann $ liftA2 N.update (expr a) (attrs b)
+expr (ObjectUpdate ann a b) = localAnn ann $ liftA2 (N.bin N.Update) (expr a) (attrs b)
 expr Case {} = throw "Cannot yet convert case expression"
 expr Constructor {} = throw "Cannot yet convert constructors"
 
