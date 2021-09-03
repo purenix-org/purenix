@@ -119,7 +119,10 @@ quotes :: Printer -> Printer
 quotes p = char '"' <> p <> char '"'
 
 binding :: (Ident, Printer) -> Printer
-binding (ident, body) = text ident <> " = " <> body <> ";"
+binding (ident, body) = escape ident <> " = " <> body <> ";"
+
+escape :: Text -> Printer
+escape t = if T.all isAlphaNum t then text t else quotes (text t)
 
 ppExpr :: Style -> ExprF Printer -> Printer
 ppExpr _ (Var i) = text i
@@ -130,13 +133,10 @@ ppExpr sty (Attrs ih ihf b) = delimit sty '{' '}' $ sepBy newline $ inherits <> 
   where
     inherits = ["inherit " <> sepBy space (text <$> ih) <> ";" | not (null ih)]
     inheritFroms = (\(from, idents) -> "inherit " <> delimit Single '(' ')' from <> space <> sepBy space (text <$> idents) <> ";") <$> ihf
-    binds = (\(ident, body) -> text ident <> " = " <> body <> ";") <$> b
+    binds = binding <$> b
 ppExpr _ (List []) = "[]"
 ppExpr sty (List l) = delimit sty '[' ']' $ sepBy newline l
 ppExpr _ (Sel a b) = a <> "." <> escape b
-  where
-    escape :: Text -> Printer
-    escape t = if T.all isAlphaNum t then text t else quotes (text t)
 ppExpr _ (String str) = text str
 ppExpr _ (Num n) = string (show n)
 ppExpr _ (Let binds body) =
