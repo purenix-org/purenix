@@ -39,13 +39,13 @@ localAnn :: Ann -> Convert a -> Convert a
 localAnn (spn, _, _, _) = localSpan spn
 
 -- Module wrapper structure:
--- imports:
+-- modules:
 -- let
 --   bindingA = "foo"
 --   bindingB = "bar"
 -- in {
 --   inherit bindingA;
---   inherit (imports.moduleA) reExportA;
+--   inherit (modules.moduleA) reExportA;
 -- }
 
 {-# ANN module' ("hlint: ignore" :: String) #-}
@@ -56,7 +56,7 @@ module' ::
   [Bind Ann] ->
   Convert N.Expr
 module' _imports exports reexports decls =
-  (liftA (N.abs "imports"))
+  (liftA (N.abs "modules"))
     ( (liftA2 N.let')
         (bindings decls)
         ( (liftA3 N.attrs)
@@ -67,7 +67,7 @@ module' _imports exports reexports decls =
     )
   where
     inheritFrom :: P.ModuleName -> [Ident] -> Convert (N.Expr, [N.Ident])
-    inheritFrom (P.ModuleName m) exps = (N.sel (N.var "imports") m,) <$> traverse ident exps
+    inheritFrom (P.ModuleName m) exps = (N.sel (N.var "modules") m,) <$> traverse ident exps
 
 bindings :: [Bind Ann] -> Convert [(N.Ident, N.Expr)]
 bindings = traverse binding . (>>= flatten)
@@ -83,7 +83,7 @@ expr (Abs ann arg body) = localAnn ann $ liftA2 N.abs (ident arg >>= \w -> w <$ 
 expr (Literal ann lit) = localAnn ann $ literal lit
 expr (App ann f x) = localAnn ann $ liftA2 N.app (expr f) (expr x)
 expr (Var ann (P.Qualified Nothing i)) = localAnn ann $ N.var <$> ident i
-expr (Var ann (P.Qualified (Just (P.ModuleName m)) i)) = localAnn ann $ N.sel (N.sel (N.var "imports") m) <$> ident i
+expr (Var ann (P.Qualified (Just (P.ModuleName m)) i)) = localAnn ann $ N.sel (N.sel (N.var "modules") m) <$> ident i
 expr (Accessor ann sel body) = localAnn ann $ flip N.sel (P.prettyPrintObjectKey sel) <$> expr body
 expr (Let ann binds body) = localAnn ann $ liftA2 N.let' (bindings binds) (expr body)
 expr (ObjectUpdate ann a b) = localAnn ann $ liftA2 (N.bin N.Update) (expr a) (attrs b)
@@ -101,7 +101,7 @@ checkKeyword w =
     then throw $ "binder " <> w <> " is a keyword"
     else pure ()
   where
-    keywords = ["import", "inherit", "builtins", "true", "false", "let", "in", "with"]
+    keywords = ["modules", "import", "inherit", "builtins", "true", "false", "let", "in", "with"]
 
 attrs :: [(PSString, Expr Ann)] -> Convert N.Expr
 attrs = fmap (N.attrs [] []) . traverse attr
