@@ -5,10 +5,12 @@ module Nix.Print (renderExpr) where
 import Control.Monad.Reader
 import Control.Monad.State
 import Data.Bool (bool)
+import Data.Char (isAlphaNum)
 import Data.List (intersperse)
 import Data.Semigroup (mtimesDefault)
 import Data.String (IsString (..))
 import Data.Text (Text)
+import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import Data.Text.Lazy.Builder (Builder)
 import qualified Data.Text.Lazy.Builder as TB
@@ -131,7 +133,10 @@ ppExpr sty (Attrs ih ihf b) = delimit sty '{' '}' $ sepBy newline $ inherits <> 
     binds = (\(ident, body) -> text ident <> " = " <> body <> ";") <$> b
 ppExpr _ (List []) = "[]"
 ppExpr sty (List l) = delimit sty '[' ']' $ sepBy newline l
-ppExpr _ (Sel a b) = a <> "." <> quotes (text b)
+ppExpr _ (Sel a b) = a <> "." <> escape b
+  where
+    escape :: Text -> Printer
+    escape t = if T.all isAlphaNum t then text t else quotes (text t)
 ppExpr _ (String str) = text str
 ppExpr _ (Num n) = string (show n)
 ppExpr _ (Let binds body) =
