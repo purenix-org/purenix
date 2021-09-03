@@ -20,7 +20,7 @@ data ExprF f
   | List [f]
   | Bin Op f f
   | Sel f Ident
-  | Let (Map Ident f) f
+  | Let [(Ident, f)] f
   | Num Integer
   | String Text
   deriving stock (Functor, Foldable, Traversable, Show)
@@ -50,7 +50,7 @@ attrs inherits inheritFroms binds = Expr $ Attrs inherits inheritFroms binds
 sel :: Expr -> Ident -> Expr
 sel e s = Expr $ Sel e s
 
-let' :: Map Ident Expr -> Expr -> Expr
+let' :: [(Ident, Expr)] -> Expr -> Expr
 let' binds body = Expr $ Let binds body
 
 num :: Integer -> Expr

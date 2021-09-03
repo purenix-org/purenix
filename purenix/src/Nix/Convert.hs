@@ -74,8 +74,8 @@ module' _imports exports reexports decls =
     inheritFrom :: P.ModuleName -> [Ident] -> Convert (N.Expr, [N.Ident])
     inheritFrom (P.ModuleName m) exps = (N.sel (N.var "import") m,) <$> traverse ident exps
 
-bindings :: [Bind Ann] -> Convert (Map N.Ident N.Expr)
-bindings = fmap M.fromList . traverse binding . (>>= flatten)
+bindings :: [Bind Ann] -> Convert [(N.Ident, N.Expr)]
+bindings = traverse binding . (>>= flatten)
   where
     binding :: (Ann, Ident, Expr Ann) -> Convert (N.Ident, N.Expr)
     binding (ann, i, e) = localAnn ann $ liftA2 (,) (ident i) (expr e)
