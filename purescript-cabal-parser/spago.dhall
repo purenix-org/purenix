@@ -11,7 +11,17 @@ When creating a new Spago project, you can use
 to generate this file without the comments in this block.
 -}
 { name = "cabal-parser"
-, dependencies = [ "console", "effect", "prelude", "psci-support" ]
-, packages = ./packages.dhall
-, sources = [ "src/**/*.purs", "test/**/*.purs" ]
+
+-- , dependencies = [ "console", "effect", "prelude", "psci-support" ]
+, dependencies = [] : List Text
+
+-- , packages = ./packages.dhall
+, packages = {=}
+
+, backend = "cd ../purenix && cabal run purenix"
+
+, sources =
+    [ "src/**/*.purs"
+    -- , "test/**/*.purs"
+    ]
 }

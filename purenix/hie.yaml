@@ -7,7 +7,7 @@ cradle:
       config: {cradle: {cabal: {component: "lib:purenix"}}}
 
     - path: "app"
-      config: {cradle: {cabal: {component: "purenix:purenix-exe"}}}
+      config: {cradle: {cabal: {component: "purenix:purenix"}}}
 
     - path: "test"
       config: {cradle: {cabal: {component: "purenix:purenix-test"}}}
