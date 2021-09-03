@@ -1,4 +1,4 @@
-module Main where
+module Main (module Main, module Dep) where
 
 import Dep
 
@@ -15,7 +15,7 @@ myId :: forall a. a -> a
 myId a = a
 
 myNum :: Int
-myNum = myDep
+myNum = myId myDep
 
 foreign import mySubstring :: Int -> Int -> String -> String
 
