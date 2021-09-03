@@ -4,6 +4,7 @@ version:         0
 license:         BSD-3-Clause
 build-type:      Simple
 license-file:    LICENSE
+
 -- category:
 -- description:     description
 -- synopsis:        one-line synopsis
@@ -32,13 +33,18 @@ library
   import:          common-options
   hs-source-dirs:  src
   exposed-modules: Lib
+  other-modules:
+    Nix.AST
+    Nix.Convert
+    Nix.Print
+
   build-depends:
     , aeson
     , containers
     , directory
     , mtl
-    , purescript  ==0.14.4
     , pretty-simple
+    , purescript     ==0.14.4
     , text
 
 executable purenix

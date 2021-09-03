@@ -1,5 +1,7 @@
 module Main where
 
+import Dep
+
 -- import Prelude
 
 -- import Effect (Effect)
@@ -13,7 +15,7 @@ myId :: forall a. a -> a
 myId a = a
 
 myNum :: Int
-myNum = 3
+myNum = myDep
 
 foreign import mySubstring :: Int -> Int -> String -> String
 
