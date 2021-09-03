@@ -97,7 +97,7 @@ exprPrec (Bin op _ _) = opPrec op
   where
     opPrec :: Op -> Int
     opPrec Update = 5
-exprPrec Abs {} = 1
+exprPrec Abs {} = 0
 exprPrec Let {} = 0
 
 parens :: Bool -> Style -> Printer -> Printer
@@ -136,7 +136,8 @@ ppExpr _ (String str) = text str
 ppExpr _ (Num n) = string (show n)
 ppExpr _ (Let binds body) =
   mconcat
-    [ "let",
+    [ newline,
+      "let",
       indent $ newline <> sepBy newline (binding <$> binds),
       newline,
       "in",
