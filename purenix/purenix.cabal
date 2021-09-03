@@ -11,7 +11,7 @@ author:          Dennis Gosnell, Jonas Carpay
 maintainer:      Dennis Gosnell <cdep.illabout@gmail.com>
 copyright:       2021 Dennis Gosnell, Jonas Carpay
 homepage:        https://github.com/cdepillabout/cabal2nixWithoutIFD
-tested-with:     GHC ==8.6.3 || ==8.8.3 || ==8.10.5
+tested-with:     GHC ==8.10.4
 extra-doc-files:
   CHANGELOG.md
   README.md
@@ -33,11 +33,15 @@ library
   hs-source-dirs:  src
   exposed-modules: Lib
   build-depends:
+    , aeson
     , containers
+    , directory
     , mtl
     , purescript  ==0.14.4
+    , pretty-simple
+    , text
 
-executable purenix-exe
+executable purenix
   import:         common-options
   hs-source-dirs: app
   main-is:        Main.hs

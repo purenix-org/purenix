@@ -18,7 +18,7 @@ to generate this file without the comments in this block.
 -- , packages = ./packages.dhall
 , packages = {=}
 
-, backend = "cd ../purenix && cabal run"
+, backend = "cd ../purenix && cabal run purenix"
 
 , sources =
     [ "src/**/*.purs"

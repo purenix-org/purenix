@@ -24,3 +24,6 @@ cabal.project.local~
 
 # nix result files
 /result*
+
+# .nix files generated from purenix
+/generated/
