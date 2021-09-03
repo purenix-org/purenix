@@ -25,3 +25,27 @@ data ExprF f
 
 foldExpr :: (ExprF r -> r) -> Expr -> r
 foldExpr f = go where go = f . fmap go . unExpr
+
+var :: Ident -> Expr
+var = Expr . Var
+
+abs :: Ident -> Expr -> Expr
+abs arg body = Expr $ Abs arg body
+
+app :: Expr -> Expr -> Expr
+app f x = Expr $ App f x
+
+attrs :: Map Ident Expr -> Expr
+attrs = Expr . Attrs
+
+sel :: Expr -> Ident -> Expr
+sel e s = Expr $ Sel e s
+
+let' :: Map Ident Expr -> Expr -> Expr
+let' binds body = Expr $ Let binds body
+
+num :: Integer -> Expr
+num = Expr . Num
+
+string :: Text -> Expr
+string = Expr . String
