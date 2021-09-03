@@ -132,7 +132,7 @@ ppExpr sty (Attrs ih ihf b) = delimit sty '{' '}' $ sepBy newline $ inherits <> 
 ppExpr _ (List []) = "[]"
 ppExpr sty (List l) = delimit sty '[' ']' $ sepBy newline l
 ppExpr _ (Sel a b) = a <> "." <> quotes (text b)
-ppExpr _ (String str) = quotes (text str)
+ppExpr _ (String str) = text str
 ppExpr _ (Num n) = string (show n)
 ppExpr _ (Let binds body) =
   mconcat
