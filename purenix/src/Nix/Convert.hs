@@ -1,8 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
+-- TODO don't export
+{-# LANGUAGE TupleSections #-}
 
 module Nix.Convert
   ( convert,
-    expr, -- TODO don't export
+    expr,
   )
 where
 
@@ -10,6 +12,7 @@ import Control.Applicative
 import Control.Monad.Except
 import Control.Monad.Reader
 import Data.Map
+import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.PureScript (Ident (..))
@@ -38,22 +41,40 @@ localSpan spn = local (fmap $ const spn)
 localAnn :: Ann -> Convert a -> Convert a
 localAnn (spn, _, _, _) = localSpan spn
 
+-- import:
+-- let
+--   bindingA = "foo"
+--   bindingB = "bar"
+-- in {
+--   inherit bindingA;
+--   inherit (import.moduleA) reExportA;
+-- }
+
+{-# ANN module' ("hlint: ignore" :: String) #-}
 module' ::
   [(Ann, P.ModuleName)] ->
   [Ident] ->
   Map P.ModuleName [Ident] ->
   [Bind Ann] ->
   Convert N.Expr
-module' imports exports reexports decls =
-  pure $
-    -- TODO avoid name clashes
-    N.abs "imports" $
-      N.let'
-        (_ decls)
-        $ N.attrs
-          (_ exports)
-          (_ reexports)
-          mempty
+module' _imports exports reexports decls =
+  (liftA (N.abs "import"))
+    ( (liftA2 N.let')
+        (M.fromList <$> traverse binding (decls >>= flatten))
+        ( (liftA3 N.attrs)
+            (traverse ident exports)
+            (traverse (uncurry inheritFrom) (M.toList reexports))
+            (pure mempty)
+        )
+    )
+  where
+    binding :: (Ann, Ident, Expr Ann) -> Convert (N.Ident, N.Expr)
+    binding (ann, i, e) = localAnn ann $ liftA2 (,) (ident i) (expr e)
+    inheritFrom :: P.ModuleName -> [Ident] -> Convert (N.Expr, [N.Ident])
+    inheritFrom (P.ModuleName m) exps = (N.sel (N.var "import") m,) <$> traverse ident exps
+    flatten :: Bind a -> [(a, Ident, Expr a)]
+    flatten (NonRec a i e) = [(a, i, e)]
+    flatten (Rec bs) = (\((a, i), e) -> (a, i, e)) <$> bs
 
 expr :: Expr Ann -> Convert N.Expr
 expr (Abs ann arg body) = localAnn ann $ liftA2 N.abs (ident arg) (expr body)
