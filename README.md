@@ -44,7 +44,7 @@ $ spago build --verbose
     For instance, `./purescript-cabal-parser/src/Main.purs` will be compiled to
     `./purescript-cabal-parser/output/Main/corefn.json`.
 
-3.  `spago` will try to run the `backend` command in
+3.  `spago` will try to run the `backend` command defined in
     `./purescript-cabal-parser/spago.dhall`.
 
     This is set to `cd ../purenix && cabal run purenix`, so the `purenix`
@@ -53,3 +53,15 @@ $ spago build --verbose
 4.  `purenix` needs to look for all `corefn.json` files in
     `./purescript-cabal-parser/output/`, translate them to JSON, and then
     output them somewhere.
+
+    It also needs to take into account the optional FFI files for each PureScript module.
+
+    For instance, if `./purescript-cabal-parser/src/Main.purs` defines FFI
+    functions, there needs to be a corresponding
+    `./purescript-cabal-parser/src/Main.nix` file.
+
+    Note that `spago build` does not copy this
+    `./purescript-cabal-parser/src/Main.nix` file to
+    `./purescript-cabal-parser/output/` for us, so we need to explicitly look
+    for `./purescript-cabal-parser/src/Main.nix` in `purenix`.  I haven't yet
+    looked at how other PureScript backends handle this.
