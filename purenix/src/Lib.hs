@@ -2,11 +2,12 @@ module Lib where
 
 import Data.Aeson (decode)
 import Data.Aeson.Types (parseEither)
+import qualified Data.Text as T
 import Data.Text.Lazy (pack)
 import Data.Text.Lazy.Encoding (encodeUtf8)
 import qualified Data.Text.Lazy.IO as TL
 import Language.PureScript.CoreFn.FromJSON (moduleFromJSON)
-import Nix.Convert (convertModule)
+import Nix.Convert (convert)
 import Nix.Print (renderNix)
 import System.Directory (createDirectoryIfMissing)
 import qualified System.Environment as Env
@@ -26,7 +27,7 @@ defaultMain = do
         Left err -> error err
         Right (_version, mdl) -> do
           putStrLn "successfully decoded purescript module"
-          nix <- either (Sys.die . show) (pure . renderNix) $ convertModule mdl
+          nix <- either (Sys.die . T.unpack) (pure . renderNix) $ convert mdl
           TL.putStrLn nix
 
           -- TODO: Transform the purescript module into a .nix file

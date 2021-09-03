@@ -1,40 +1,54 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Nix.Convert
-  ( Convert,
-    ConversionError (..),
-    convertModule,
+  ( convert,
     expr, -- TODO don't export
   )
 where
 
 import Control.Applicative
 import Control.Monad.Except
+import Control.Monad.Reader
+import Data.Text (Text)
 import qualified Data.Text as T
 import Language.PureScript (Ident (..))
-import Language.PureScript.CoreFn as P
+import qualified Language.PureScript as P
+import Language.PureScript.CoreFn
 import Language.PureScript.Errors (SourceSpan)
 import qualified Nix.Expr as N
 
-data ConversionError = TODO
-  deriving (Eq, Show)
+type Convert = ReaderT SourceSpan (Either (SourceSpan, String))
 
-type Convert = Either (SourceSpan, String)
+convert :: Module Ann -> Either Text N.Expr
+convert m = case runReaderT (module' m) (moduleSourceSpan m) of
+  Left (spn, err) -> Left $ T.unlines ["Error at " <> P.displayStartEndPosShort spn <> ":", T.pack err]
+  Right e -> pure e
 
-throwAnn :: Ann -> String -> Convert a
-throwAnn (spn, _, _, _) = throwAt spn
+throw :: String -> Convert a
+throw err = ask >>= \spn -> throwError (spn, err)
 
-throwAt :: SourceSpan -> String -> Convert a
-throwAt spn err = throwError (spn, err)
+localSpan :: SourceSpan -> Convert a -> Convert a
+localSpan spn = local (const spn)
 
-convertModule :: Module Ann -> Convert N.Expr
-convertModule md = throwAt (moduleSourceSpan md) "まだ"
+localAnn :: Ann -> Convert a -> Convert a
+localAnn (spn, _, _, _) = local (const spn)
+
+module' :: Module Ann -> Convert N.Expr
+module' md = localSpan (moduleSourceSpan md) $ throw "Not yet implemented"
 
 expr :: Expr Ann -> Convert N.Expr
-expr (Abs ann arg body) = Nix <$> liftA2 N.Abs (ident ann arg) (expr body)
-expr (Literal _ _) = literal lit
+expr (Abs ann arg body) = local' ann $ liftA2 N.Abs (ident arg) (expr body)
+expr (Literal ann lit) = localAnn ann $ literal lit
 
-ident :: Ann -> Ident -> Convert N.Ident
-ident _ (Ident i) = pure i
-ident _ (GenIdent mname n) = pure $ maybe id mappend mname (T.pack $ show n)
-ident ann UnusedIdent = throwAnn ann "Impossible: Encountered typechecking-only identifier"
+local' :: Ann -> Convert (N.ExprF N.Expr) -> Convert N.Expr
+local' = undefined
 
-literal :: Literal -> Convert N.Expr
+ident :: Ident -> Convert N.Ident
+ident (Ident i) = pure i
+ident (GenIdent mname n) = pure $ maybe id mappend mname (T.pack $ show n)
+ident UnusedIdent = throw "Impossible: Encountered typechecking-only identifier"
+
+literal :: Literal (Expr Ann) -> Convert N.Expr
+literal (NumericLiteral (Left n)) = pure $ N.Expr $ N.Num n
+literal (NumericLiteral (Right _)) = throw "Encountered floating-point literal"
+literal (StringLiteral str) = pure $ N.Expr $ N.String $ P.prettyPrintString str
