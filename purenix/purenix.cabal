@@ -34,8 +34,8 @@ library
   hs-source-dirs:  src
   exposed-modules: Lib
   other-modules:
-    Nix.AST
     Nix.Convert
+    Nix.Expr
     Nix.Print
 
   build-depends:

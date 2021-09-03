@@ -2,20 +2,20 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Nix.AST where
+module Nix.Expr where
 
 import Data.Map (Map)
 import Data.Text (Text)
 
 type Ident = Text
 
-newtype Nix = Nix (NixF Nix)
+newtype Expr = Expr (ExprF Expr)
   deriving newtype (Show)
 
-data NixF f
+data ExprF f
   = Var Ident
   | Num Integer
-  | Lam Ident f
+  | Abs Ident f
   | App f f
   | Attrs (Map Ident f)
   | Sel f Ident
