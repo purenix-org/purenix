@@ -18,12 +18,15 @@ data ExprF f
   | App f f
   | Attrs [Ident] [(f, [Ident])] (Map Ident f)
   | List [f]
-  | Update f f
+  | Bin Op f f
   | Sel f Ident
   | Let (Map Ident f) f
   | Num Integer
   | String Text
   deriving stock (Functor, Foldable, Traversable, Show)
+
+data Op = Update
+  deriving (Eq, Show)
 
 foldExpr :: (ExprF r -> r) -> Expr -> r
 foldExpr f = go where go = f . fmap go . unExpr
@@ -59,5 +62,5 @@ string = Expr . String
 list :: [Expr] -> Expr
 list = Expr . List
 
-update :: Expr -> Expr -> Expr
-update a b = Expr $ Update a b
+bin :: Op -> Expr -> Expr -> Expr
+bin op a b = Expr $ Bin op a b
