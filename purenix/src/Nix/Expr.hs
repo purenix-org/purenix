@@ -16,7 +16,7 @@ data ExprF f
   = Var Ident
   | Abs Ident f
   | App f f
-  | Attrs [Ident] [(f, [Ident])] (Map Ident f)
+  | Attrs [Ident] [(f, [Ident])] [(Ident, f)]
   | List [f]
   | Bin Op f f
   | Sel f Ident
@@ -43,7 +43,7 @@ app f x = Expr $ App f x
 attrs ::
   [Ident] ->
   [(Expr, [Ident])] ->
-  Map Ident Expr ->
+  [(Ident, Expr)] ->
   Expr
 attrs inherits inheritFroms binds = Expr $ Attrs inherits inheritFroms binds
 

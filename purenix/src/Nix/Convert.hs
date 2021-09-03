@@ -101,7 +101,7 @@ ident (GenIdent mname n) = pure $ maybe id mappend mname (T.pack $ show n)
 ident UnusedIdent = throw "Impossible: Encountered typechecking-only identifier"
 
 attrs :: [(PSString, Expr Ann)] -> Convert N.Expr
-attrs = fmap (N.attrs [] [] . M.fromList) . traverse attr
+attrs = fmap (N.attrs [] []) . traverse attr
   where
     attr (string, body) = (P.prettyPrintString string,) <$> expr body
 
