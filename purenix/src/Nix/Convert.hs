@@ -17,21 +17,25 @@ import Language.PureScript.CoreFn
 import Language.PureScript.Errors (SourceSpan)
 import qualified Nix.Expr as N
 
-type Convert = ReaderT SourceSpan (Either (SourceSpan, String))
+type Convert = ReaderT (FilePath, SourceSpan) (Either Text)
 
 convert :: Module Ann -> Either Text N.Expr
-convert m = case runReaderT (module' m) (moduleSourceSpan m) of
-  Left (spn, err) -> Left $ T.unlines ["Error at " <> P.displayStartEndPosShort spn <> ":", T.pack err]
-  Right e -> pure e
+convert m = runReaderT (module' m) (modulePath m, moduleSourceSpan m)
 
-throw :: String -> Convert a
-throw err = ask >>= \spn -> throwError (spn, err)
+throw :: Text -> Convert a
+throw err = ask >>= throwError . uncurry format
+  where
+    format fp spn =
+      T.unlines
+        [ mconcat ["Error in ", T.pack fp, " at ", P.displayStartEndPosShort spn, ":"],
+          err
+        ]
 
 localSpan :: SourceSpan -> Convert a -> Convert a
-localSpan spn = local (const spn)
+localSpan spn = local (fmap $ const spn)
 
 localAnn :: Ann -> Convert a -> Convert a
-localAnn (spn, _, _, _) = local (const spn)
+localAnn (spn, _, _, _) = localSpan spn
 
 module' :: Module Ann -> Convert N.Expr
 module' md = localSpan (moduleSourceSpan md) $ throw "Not yet implemented"
