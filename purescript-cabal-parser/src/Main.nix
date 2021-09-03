@@ -1,0 +1,2 @@
+
+{ mySubstring = builtins.substring; }
