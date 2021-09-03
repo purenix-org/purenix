@@ -1,12 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
--- TODO don't export
 {-# LANGUAGE TupleSections #-}
 
-module Nix.Convert
-  ( convert,
-    expr,
-  )
-where
+module Nix.Convert (convert) where
 
 import Control.Applicative
 import Control.Monad.Except
@@ -44,13 +39,13 @@ localAnn :: Ann -> Convert a -> Convert a
 localAnn (spn, _, _, _) = localSpan spn
 
 -- Module wrapper structure:
--- import:
+-- imports:
 -- let
 --   bindingA = "foo"
 --   bindingB = "bar"
 -- in {
 --   inherit bindingA;
---   inherit (import.moduleA) reExportA;
+--   inherit (imports.moduleA) reExportA;
 -- }
 
 {-# ANN module' ("hlint: ignore" :: String) #-}
@@ -61,7 +56,7 @@ module' ::
   [Bind Ann] ->
   Convert N.Expr
 module' _imports exports reexports decls =
-  (liftA (N.abs "import"))
+  (liftA (N.abs "imports"))
     ( (liftA2 N.let')
         (bindings decls)
         ( (liftA3 N.attrs)
@@ -72,7 +67,7 @@ module' _imports exports reexports decls =
     )
   where
     inheritFrom :: P.ModuleName -> [Ident] -> Convert (N.Expr, [N.Ident])
-    inheritFrom (P.ModuleName m) exps = (N.sel (N.var "import") m,) <$> traverse ident exps
+    inheritFrom (P.ModuleName m) exps = (N.sel (N.var "imports") m,) <$> traverse ident exps
 
 bindings :: [Bind Ann] -> Convert [(N.Ident, N.Expr)]
 bindings = traverse binding . (>>= flatten)
@@ -84,11 +79,11 @@ bindings = traverse binding . (>>= flatten)
     flatten (Rec bs) = (\((a, i), e) -> (a, i, e)) <$> bs
 
 expr :: Expr Ann -> Convert N.Expr
-expr (Abs ann arg body) = localAnn ann $ liftA2 N.abs (ident arg) (expr body)
+expr (Abs ann arg body) = localAnn ann $ liftA2 N.abs (ident arg >>= \w -> w <$ checkKeyword w) (expr body)
 expr (Literal ann lit) = localAnn ann $ literal lit
 expr (App ann f x) = localAnn ann $ liftA2 N.app (expr f) (expr x)
 expr (Var ann (P.Qualified Nothing i)) = localAnn ann $ N.var <$> ident i
-expr (Var ann (P.Qualified (Just (P.ModuleName m)) i)) = localAnn ann $ N.sel (N.sel (N.var "import") m) <$> ident i
+expr (Var ann (P.Qualified (Just (P.ModuleName m)) i)) = localAnn ann $ N.sel (N.sel (N.var "imports") m) <$> ident i
 expr (Accessor ann sel body) = localAnn ann $ flip N.sel (P.prettyPrintObjectKey sel) <$> expr body
 expr (Let ann binds body) = localAnn ann $ liftA2 N.let' (bindings binds) (expr body)
 expr (ObjectUpdate ann a b) = localAnn ann $ liftA2 (N.bin N.Update) (expr a) (attrs b)
@@ -99,6 +94,14 @@ ident :: Ident -> Convert N.Ident
 ident (Ident i) = pure i
 ident (GenIdent mname n) = pure $ maybe id mappend mname (T.pack $ show n)
 ident UnusedIdent = throw "Impossible: Encountered typechecking-only identifier"
+
+checkKeyword :: N.Ident -> Convert ()
+checkKeyword w =
+  if w `elem` keywords
+    then throw $ "binder " <> w <> " is a keyword"
+    else pure ()
+  where
+    keywords = ["import", "inherit", "builtins", "true", "false", "let", "in", "with"]
 
 attrs :: [(PSString, Expr Ann)] -> Convert N.Expr
 attrs = fmap (N.attrs [] []) . traverse attr
