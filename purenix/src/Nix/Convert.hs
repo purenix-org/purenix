@@ -73,13 +73,13 @@ bindings :: [Bind Ann] -> Convert [(N.Ident, N.Expr)]
 bindings = traverse binding . (>>= flatten)
   where
     binding :: (Ann, Ident, Expr Ann) -> Convert (N.Ident, N.Expr)
-    binding (ann, i, e) = localAnn ann $ liftA2 (,) (ident i) (expr e)
+    binding (ann, i, e) = localAnn ann $ liftA2 (,) (ident i >>= checkKeyword) (expr e)
     flatten :: Bind a -> [(a, Ident, Expr a)]
     flatten (NonRec a i e) = [(a, i, e)]
     flatten (Rec bs) = (\((a, i), e) -> (a, i, e)) <$> bs
 
 expr :: Expr Ann -> Convert N.Expr
-expr (Abs ann arg body) = localAnn ann $ liftA2 N.abs (ident arg >>= \w -> w <$ checkKeyword w) (expr body)
+expr (Abs ann arg body) = localAnn ann $ liftA2 N.abs (ident arg >>= checkKeyword) (expr body)
 expr (Literal ann lit) = localAnn ann $ literal lit
 expr (App ann f x) = localAnn ann $ liftA2 N.app (expr f) (expr x)
 expr (Var ann (P.Qualified Nothing i)) = localAnn ann $ N.var <$> ident i
@@ -95,11 +95,11 @@ ident (Ident i) = pure i
 ident (GenIdent mname n) = pure $ maybe id mappend mname (T.pack $ show n)
 ident UnusedIdent = throw "Impossible: Encountered typechecking-only identifier"
 
-checkKeyword :: N.Ident -> Convert ()
+checkKeyword :: N.Ident -> Convert N.Ident
 checkKeyword w =
   if w `elem` keywords
     then throw $ "binder " <> w <> " is a keyword"
-    else pure ()
+    else pure w
   where
     keywords = ["modules", "import", "inherit", "builtins", "true", "false", "let", "in", "with"]
 
