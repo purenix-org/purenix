@@ -16,7 +16,7 @@ data ExprF f
   = Var Ident
   | Abs Ident f
   | App f f
-  | Attrs (Map Ident f)
+  | Attrs [Ident] [(f, [Ident])] (Map Ident f)
   | Sel f Ident
   | Let (Map Ident f) f
   | Num Integer
@@ -35,8 +35,12 @@ abs arg body = Expr $ Abs arg body
 app :: Expr -> Expr -> Expr
 app f x = Expr $ App f x
 
-attrs :: Map Ident Expr -> Expr
-attrs = Expr . Attrs
+attrs ::
+  [Ident] ->
+  [(Expr, [Ident])] ->
+  Map Ident Expr ->
+  Expr
+attrs inherits inheritFroms binds = Expr $ Attrs inherits inheritFroms binds
 
 sel :: Expr -> Ident -> Expr
 sel e s = Expr $ Sel e s
