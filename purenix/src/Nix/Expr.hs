@@ -17,6 +17,8 @@ data ExprF f
   | Abs Ident f
   | App f f
   | Attrs [Ident] [(f, [Ident])] (Map Ident f)
+  | List [f]
+  | Update f f
   | Sel f Ident
   | Let (Map Ident f) f
   | Num Integer
@@ -53,3 +55,9 @@ num = Expr . Num
 
 string :: Text -> Expr
 string = Expr . String
+
+list :: [Expr] -> Expr
+list = Expr . List
+
+update :: Expr -> Expr -> Expr
+update a b = Expr $ Update a b
