@@ -44,7 +44,16 @@ module' ::
   Map P.ModuleName [Ident] ->
   [Bind Ann] ->
   Convert N.Expr
-module' imports exports reexports decls = pure $ N.abs "imports" _
+module' imports exports reexports decls =
+  pure $
+    -- TODO avoid name clashes
+    N.abs "imports" $
+      N.let'
+        (_ decls)
+        $ N.attrs
+          (_ exports)
+          (_ reexports)
+          mempty
 
 expr :: Expr Ann -> Convert N.Expr
 expr (Abs ann arg body) = localAnn ann $ liftA2 N.abs (ident arg) (expr body)
