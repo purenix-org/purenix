@@ -81,7 +81,7 @@ style a _ Single = a
 style _ b Multi = b
 
 exprStyle :: ExprF Style -> Style
-exprStyle a@Attrs {} | length a > 1 = Multi
+exprStyle Attrs {} = Multi
 exprStyle Let {} = Multi
 exprStyle v = bool Single Multi $ elem Multi v
 
@@ -127,7 +127,7 @@ ppExpr _ (Attrs [] [] []) = "{ }"
 ppExpr sty (Attrs ih ihf b) = delimit sty '{' '}' $ sepBy newline $ inherits <> inheritFroms <> binds
   where
     inherits = ["inherit " <> sepBy space (text <$> ih) <> ";" | not (null ih)]
-    inheritFroms = (\(from, idents) -> "inherit " <> delimit Single '(' ')' from <> space <> sepBy space (text <$> idents)) <$> ihf
+    inheritFroms = (\(from, idents) -> "inherit " <> delimit Single '(' ')' from <> space <> sepBy space (text <$> idents) <> ";") <$> ihf
     binds = (\(ident, body) -> text ident <> " = " <> body <> ";") <$> b
 ppExpr _ (List []) = "[]"
 ppExpr sty (List l) = delimit sty '[' ']' $ sepBy newline l
@@ -141,6 +141,6 @@ ppExpr _ (Let binds body) =
       indent $ newline <> sepBy newline (binding <$> binds),
       newline,
       "in",
-      indent $ newline <> body
+      indent body
     ]
 ppExpr _ (Bin Update l r) = l <> " // " <> r
