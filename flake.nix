@@ -49,7 +49,7 @@
 
         devShell = flake.devShell.overrideAttrs (oldAttrs: {
           nativeBuildInputs = (oldAttrs.nativeBuildInputs or [ ]) ++ [
-            pkgs.purescript
+            pkgs.hsPkgs.hsPkgs.purescript.components.exes.purs
             pkgs.spago
           ];
         });
