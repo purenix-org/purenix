@@ -36,6 +36,7 @@ library
   other-modules:
     Nix.Convert
     Nix.Expr
+    Nix.Prelude
     Nix.Print
 
   build-depends:
