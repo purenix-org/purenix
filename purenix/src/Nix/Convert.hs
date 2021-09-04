@@ -1,15 +1,12 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
 
 module Nix.Convert (convert) where
 
-import Control.Applicative
-import Control.Monad.Except
-import Control.Monad.Reader
-import Data.Bool (bool)
-import Data.Map
+import Nix.Prelude
+
 import qualified Data.Map as M
-import Data.Text (Text)
 import qualified Data.Text as T
 import Language.PureScript (Ident (..))
 import qualified Language.PureScript as P

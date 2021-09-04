@@ -1,17 +1,14 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Nix.Print (renderExpr) where
 
-import Control.Monad.Reader
-import Control.Monad.State
-import Data.Bool (bool)
+import Nix.Prelude
+
 import Data.Char (isAlphaNum)
 import Data.List (intersperse)
 import Data.Semigroup (mtimesDefault)
-import Data.String (IsString (..))
-import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Data.Text.Lazy as TL
 import Data.Text.Lazy.Builder (Builder)
 import qualified Data.Text.Lazy.Builder as TB
 import Nix.Expr hiding (string)
@@ -22,7 +19,7 @@ newtype PrintState = PrintState {psBuilder :: Builder}
 
 newtype Printer = Printer {_unPrinter :: ReaderT PrintContext (State PrintState) ()}
 
-runPrinter :: Printer -> TL.Text
+runPrinter :: Printer -> LText
 runPrinter (Printer p) = TB.toLazyText $ psBuilder $ execState (runReaderT p pc0) ps0
   where
     pc0 = PrintContext 0
@@ -65,7 +62,7 @@ newline = Printer $ do
   i <- asks pcIndent
   emit ("\n" <> mtimesDefault i " ")
 
-renderExpr :: Expr -> TL.Text
+renderExpr :: Expr -> LText
 renderExpr = runPrinter . fst3 . foldExpr render
   where
     fst3 (a, _, _) = a

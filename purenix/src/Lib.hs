@@ -1,4 +1,8 @@
+{-# LANGUAGE NoImplicitPrelude #-}
+
 module Lib where
+
+import Nix.Prelude
 
 import Data.Aeson (decode)
 import Data.Aeson.Types (parseEither)
