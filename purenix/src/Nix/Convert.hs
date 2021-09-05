@@ -89,6 +89,13 @@ expr Constructor {} = throw "Cannot yet convert constructors"
 
 ident :: Ident -> Convert N.Ident
 ident (Ident i) = pure i
+-- GenIdent is only used in PureScript for "unnamed" instances.
+-- Originally, in PureScript, all instances needed to be named:
+-- https://github.com/purescript/documentation/blob/master/language/Differences-from-Haskell.md#named-instances
+-- This was relaxed in 0.14.2:
+-- https://github.com/purescript/purescript/pull/4096
+-- TODO: We'll have to make sure that no identifier are created that are _only_
+-- an integer (when mname is Nothing), since they can't be used in Nix.
 ident (GenIdent mname n) = pure $ maybe id mappend mname (T.pack $ show n)
 ident UnusedIdent = throw "Impossible: Encountered typechecking-only identifier"
 
