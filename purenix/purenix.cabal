@@ -38,6 +38,7 @@ library
     Nix.Expr
     Nix.Prelude
     Nix.Print
+    Nix.Util
 
   build-depends:
     , aeson
