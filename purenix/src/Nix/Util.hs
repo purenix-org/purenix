@@ -1,6 +1,10 @@
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
 
-module Nix.Util (stripAnnMod) where
+module Nix.Util
+  ( nixKeywords
+  , stripAnnMod
+  ) where
 
 import Nix.Prelude
 
@@ -20,3 +24,9 @@ stripAnnBind = fmap (const ())
 -- | Strip an annotation from an import.
 stripAnnImport :: (a, ModuleName) -> ((), ModuleName)
 stripAnnImport (_, modName) = ((), modName)
+
+-- keywords in nix:
+-- https://github.com/NixOS/nix/blob/90b2dd570cbd8313a8cf45b3cf66ddef2bb06e07/src/libexpr/lexer.l#L115-L124
+nixKeywords :: [Text]
+nixKeywords =
+  ["if", "then", "else", "assert", "with", "let", "in", "rec", "inherit", "or"]

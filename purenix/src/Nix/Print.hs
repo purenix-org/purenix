@@ -12,6 +12,7 @@ import qualified Data.Text as T
 import Data.Text.Lazy.Builder (Builder)
 import qualified Data.Text.Lazy.Builder as TB
 import Nix.Expr hiding (string)
+import Nix.Util (nixKeywords)
 
 newtype PrintContext = PrintContext {pcIndent :: Int}
 
@@ -119,7 +120,10 @@ binding :: (Ident, Printer) -> Printer
 binding (ident, body) = escape ident <> " = " <> body <> ";"
 
 escape :: Text -> Printer
-escape t = if T.all isAlphaNum t then text t else quotes (text t)
+escape t =
+  if T.all isAlphaNum t && not (t `elem` nixKeywords)
+  then text t
+  else quotes (text t)
 
 ppExpr :: Style -> ExprF Printer -> Printer
 ppExpr _ (Var i) = text i
