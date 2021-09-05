@@ -81,7 +81,7 @@ expr (Literal ann lit) = localAnn ann $ literal lit
 expr (App ann f x) = localAnn ann $ liftA2 N.app (expr f) (expr x)
 expr (Var ann (P.Qualified Nothing i)) = localAnn ann $ N.var <$> ident i
 expr (Var ann (P.Qualified (Just (P.ModuleName m)) i)) = localAnn ann $ N.sel (N.sel (N.var "modules") m) <$> ident i
-expr (Accessor ann sel body) = localAnn ann $ flip N.sel (P.prettyPrintObjectKey sel) <$> expr body
+expr (Accessor ann sel body) = localAnn ann $ flip N.sel (removeQuotes $ P.prettyPrintObjectKey sel) <$> expr body
 expr (Let ann binds body) = localAnn ann $ liftA2 N.let' (bindings binds) (expr body)
 expr (ObjectUpdate ann a b) = localAnn ann $ liftA2 (N.bin N.Update) (expr a) (attrs b)
 expr Case {} = throw "Cannot yet convert case expression"
@@ -141,13 +141,15 @@ checkKeyword w
 attrs :: [(PSString, Expr Ann)] -> Convert N.Expr
 attrs = fmap (N.attrs [] []) . traverse attr
   where
-    attr (string, body) = (strWithoutQuotes string,) <$> expr body
+    attr (string, body) = (removeQuotes $ P.prettyPrintString string,) <$> expr body
 
-    -- P.prettyPrintString generates strings with quotes around them.
-    -- However, the purenix pretty-printer adds strings when necessary,
-    -- so we drop the quotes here.
-    strWithoutQuotes :: PSString -> Text
-    strWithoutQuotes = T.dropEnd 1 . T.drop 1 . P.prettyPrintString
+-- | The 'P.prettyPrintString' and 'P.prettyPrintObjectKey' functions will
+-- sometimes generate strings with quotes around them.
+--
+-- However, the purenix pretty-printer adds quotes when necessary,
+-- so we drop surrounding quotes here if there are any.
+removeQuotes :: Text -> Text
+removeQuotes t = fromMaybe t $ T.stripPrefix "\"" =<< T.stripSuffix "\"" t
 
 literal :: Literal (Expr Ann) -> Convert N.Expr
 literal (NumericLiteral (Left n)) = pure $ N.num n
