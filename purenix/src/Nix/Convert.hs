@@ -100,12 +100,43 @@ ident (GenIdent mname n) = pure $ maybe id mappend mname (T.pack $ show n)
 ident UnusedIdent = throw "Impossible: Encountered typechecking-only identifier"
 
 checkKeyword :: N.Ident -> Convert N.Ident
-checkKeyword w =
-  if w `elem` keywords
-    then throw $ "binder " <> w <> " is a keyword"
-    else pure w
+checkKeyword w
+  | w `elem` purenixIdents = throw $ "binder " <> w <> " is a special identifier in purenix"
+  | w `elem` nixKeywords = throw $ "binder " <> w <> " is a nix keyword"
+  | w `elem` nixPrimops = throw $ "binder " <> w <> " is a nix primop.  You probably don't want to shadow this."
+  | otherwise = pure w
   where
-    keywords = ["modules", "import", "inherit", "builtins", "true", "false", "let", "in", "with"]
+    -- These idents have a special meaning in purenix.
+    purenixIdents = ["modules"]
+    -- keywords in nix:
+    -- https://github.com/NixOS/nix/blob/90b2dd570cbd8313a8cf45b3cf66ddef2bb06e07/src/libexpr/lexer.l#L115-L124
+    nixKeywords =
+      ["if", "then", "else", "assert", "with", "let", "in", "rec", "inherit", "or"]
+    -- primops (builtins) in Nix that can be accessed without importing anything.
+    -- These were discovered by running `nix repl` and hitting TAB.
+    nixPrimops =
+      [ "__add", "__addErrorContext", "__all", "__any", "__appendContext"
+      , "__attrNames", "__attrValues", "__bitAnd", "__bitOr", "__bitXor", "__catAttrs"
+      , "__ceil", "__compareVersions", "__concatLists", "__concatMap"
+      , "__concatStringsSep", "__currentSystem", "__currentTime", "__deepSeq", "__div"
+      , "__elem", "__elemAt", "__fetchurl", "__filter", "__filterSource", "__findFile"
+      , "__floor", "__foldl'", "__fromJSON", "__functionArgs", "__genList"
+      , "__genericClosure", "__getAttr", "__getContext", "__getEnv", "__getFlake"
+      , "__hasAttr", "__hasContext", "__hashFile", "__hashString", "__head"
+      , "__intersectAttrs", "__isAttrs", "__isBool", "__isFloat", "__isFunction"
+      , "__isInt", "__isList", "__isPath", "__isString", "__langVersion", "__length"
+      , "__lessThan", "__listToAttrs", "__mapAttrs", "__match", "__mul", "__nixPath"
+      , "__nixVersion", "__parseDrvName", "__partition", "__path", "__pathExists"
+      , "__readDir", "__readFile", "__replaceStrings", "__seq", "__sort", "__split"
+      , "__splitVersion", "__storeDir", "__storePath", "__stringLength", "__sub"
+      , "__substring", "__tail", "__toFile", "__toJSON", "__toPath", "__toXML"
+      , "__trace", "__tryEval", "__typeOf", "__unsafeDiscardOutputDependency"
+      , "__unsafeDiscardStringContext", "__unsafeGetAttrPos", "abort", "baseNameOf"
+      , "builtins", "derivation", "derivationStrict", "dirOf", "false", "fetchGit"
+      , "fetchMercurial", "fetchTarball", "fetchTree", "fromTOML", "import", "isNull"
+      , "map", "null", "placeholder", "removeAttrs", "scopedImport", "throw"
+      , "toString", "true"
+      ]
 
 attrs :: [(PSString, Expr Ann)] -> Convert N.Expr
 attrs = fmap (N.attrs [] []) . traverse attr
