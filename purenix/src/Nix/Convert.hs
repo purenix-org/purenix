@@ -14,6 +14,7 @@ import Language.PureScript.CoreFn
 import Language.PureScript.Errors (SourceSpan)
 import Language.PureScript.PSString (PSString)
 import qualified Nix.Expr as N
+import Nix.Util (nixKeywords)
 
 type Convert = ReaderT (FilePath, SourceSpan) (Either Text)
 
@@ -108,10 +109,6 @@ checkKeyword w
   where
     -- These idents have a special meaning in purenix.
     purenixIdents = ["modules"]
-    -- keywords in nix:
-    -- https://github.com/NixOS/nix/blob/90b2dd570cbd8313a8cf45b3cf66ddef2bb06e07/src/libexpr/lexer.l#L115-L124
-    nixKeywords =
-      ["if", "then", "else", "assert", "with", "let", "in", "rec", "inherit", "or"]
     -- primops (builtins) in Nix that can be accessed without importing anything.
     -- These were discovered by running `nix repl` and hitting TAB.
     nixPrimops =
