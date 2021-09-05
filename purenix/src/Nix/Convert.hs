@@ -141,7 +141,13 @@ checkKeyword w
 attrs :: [(PSString, Expr Ann)] -> Convert N.Expr
 attrs = fmap (N.attrs [] []) . traverse attr
   where
-    attr (string, body) = (P.prettyPrintString string,) <$> expr body
+    attr (string, body) = (strWithoutQuotes string,) <$> expr body
+
+    -- P.prettyPrintString generates strings with quotes around them.
+    -- However, the purenix pretty-printer adds strings when necessary,
+    -- so we drop the quotes here.
+    strWithoutQuotes :: PSString -> Text
+    strWithoutQuotes = T.dropEnd 1 . T.drop 1 . P.prettyPrintString
 
 literal :: Literal (Expr Ann) -> Convert N.Expr
 literal (NumericLiteral (Left n)) = pure $ N.num n
