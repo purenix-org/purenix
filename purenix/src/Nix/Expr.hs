@@ -1,11 +1,11 @@
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module Nix.Expr where
 
-import Data.Map (Map)
-import Data.Text (Text)
+import Nix.Prelude
 
 type Ident = Text
 
