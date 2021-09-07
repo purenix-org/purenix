@@ -72,7 +72,8 @@ renderExpr = runPrinter . fst3 . foldExpr render
     render expr = (ppExpr sty parenthesized, sty, exprPrec expr)
       where
         sty = exprStyle (snd3 <$> expr)
-        parenthesized = let f = parenthesize expr in (\(p, sty', prec) -> parens (f prec) sty' p) <$> expr
+        parenthesized =
+          let f = parenthesize expr in (\(p, sty', prec) -> parens (f prec) sty' p) <$> expr
 
 data Style = Single | Multi deriving (Eq, Ord)
 
@@ -99,6 +100,7 @@ exprPrec (Bin op _ _) = opPrec op
     opPrec Update = 5
 exprPrec Abs {} = 0
 exprPrec Let {} = 0
+exprPrec Raw {} = 0
 
 parens :: Bool -> Style -> Printer -> Printer
 parens False _ = id
@@ -108,6 +110,7 @@ parenthesize :: ExprF a -> Int -> Bool
 parenthesize Attrs {} = const False
 parenthesize Let {} = const False
 parenthesize List {} = (< 10)
+parenthesize Raw {} = const True
 parenthesize e = (< exprPrec e)
 
 sepBy :: Printer -> [Printer] -> Printer
@@ -121,7 +124,7 @@ binding (ident, body) = escape ident <> " = " <> body <> ";"
 
 escape :: Text -> Printer
 escape t =
-  if T.all isAlphaNum t && not (t `elem` nixKeywords)
+  if T.all (\c -> isAlphaNum c || c == '_') t && not (t `elem` nixKeywords)
   then text t
   else quotes (text t)
 
@@ -150,3 +153,4 @@ ppExpr _ (Let binds body) =
       indent body
     ]
 ppExpr _ (Bin Update l r) = l <> " // " <> r
+ppExpr _ (Raw t) = text t

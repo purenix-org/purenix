@@ -18,8 +18,9 @@ import Nix.Util (nixKeywords)
 
 type Convert = ReaderT (FilePath, SourceSpan) (Either Text)
 
-convert :: Module Ann -> Either Text N.Expr
-convert (Module spn _comments _name path imports exports reexports _foreign decls) = runReaderT (module' imports exports reexports decls) (path, spn)
+convert :: Module Ann -> Maybe Text -> Either Text N.Expr
+convert (Module spn _comments _name path imports exports reexports foreign' decls) maybeFfiFile =
+  runReaderT (module' imports exports reexports foreign' decls maybeFfiFile) (path, spn)
 
 throw :: Text -> Convert a
 throw err = ask >>= throwError . uncurry format
@@ -51,21 +52,36 @@ module' ::
   [(Ann, P.ModuleName)] ->
   [Ident] ->
   Map P.ModuleName [Ident] ->
+  [Ident] ->
   [Bind Ann] ->
+  Maybe Text ->
   Convert N.Expr
-module' _imports exports reexports decls =
-  (liftA (N.abs "modules"))
-    ( (liftA2 N.let')
-        (bindings decls)
-        ( (liftA3 N.attrs)
-            (traverse ident exports)
-            (traverse (uncurry inheritFrom) (M.toList reexports))
-            (pure mempty)
+module' _imports exports reexports foreign' decls maybeFfiFile = do
+  let ffiFileBinding =
+        case maybeFfiFile of
+          Just ffiFile -> [("__ffi", N.raw ffiFile)]
+          Nothing -> [("__ffi", N.attrs [] [] [])]
+  ffiBinds <- traverse foreignBinding foreign'
+  binds <- bindings decls
+  expts <- traverse ident exports
+  reexpts <- traverse (uncurry inheritFrom) (M.toList reexports)
+  pure $
+    N.abs "modules" $
+      N.let'
+        (ffiFileBinding <> ffiBinds <> binds)
+        ( N.attrs
+            (expts <> ["__ffi"])
+            reexpts
+            mempty
         )
-    )
   where
     inheritFrom :: P.ModuleName -> [Ident] -> Convert (N.Expr, [N.Ident])
     inheritFrom (P.ModuleName m) exps = (N.sel (N.var "modules") m,) <$> traverse ident exps
+
+    foreignBinding :: Ident -> Convert (N.Ident, N.Expr)
+    foreignBinding ffiIdent = do
+      i <- ident ffiIdent
+      pure (i, N.sel (N.var "__ffi") i)
 
 bindings :: [Bind Ann] -> Convert [(N.Ident, N.Expr)]
 bindings = traverse binding . (>>= flatten)
@@ -108,7 +124,7 @@ checkKeyword w
   | otherwise = pure w
   where
     -- These idents have a special meaning in purenix.
-    purenixIdents = ["modules"]
+    purenixIdents = ["modules", "__ffi"]
     -- primops (builtins) in Nix that can be accessed without importing anything.
     -- These were discovered by running `nix repl` and hitting TAB.
     nixPrimops =
