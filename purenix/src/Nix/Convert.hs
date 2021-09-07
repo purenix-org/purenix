@@ -6,6 +6,7 @@ module Nix.Convert (convert) where
 
 import Nix.Prelude
 
+import Data.List ((\\))
 import qualified Data.Map as M
 import qualified Data.Text as T
 import Language.PureScript (Ident (..))
@@ -57,28 +58,31 @@ module' ::
   Maybe Text ->
   Convert N.Expr
 module' _imports exports reexports foreign' decls maybeFfiFile = do
-  let ffiBinding =
+  let ffiFileBinding =
         case maybeFfiFile of
           Just ffiFile -> [("__ffi", N.raw ffiFile)]
-          Nothing -> []
+          Nothing -> [("__ffi", N.attrs [] [] [])]
+  ffiBinds <- traverse foreignBinding foreign'
   binds <- bindings decls
   expts <- traverse ident exports
-  ffiExpts <- ffiExports foreign'
   reexpts <- traverse (uncurry inheritFrom) (M.toList reexports)
   pure $
     N.abs "modules" $
       N.let'
-        (ffiBinding <> binds)
-        (N.attrs expts (ffiExpts : reexpts) mempty)
+        (ffiFileBinding <> ffiBinds <> binds)
+        ( N.attrs
+            (expts <> ["__ffi"])
+            reexpts
+            mempty
+        )
   where
     inheritFrom :: P.ModuleName -> [Ident] -> Convert (N.Expr, [N.Ident])
     inheritFrom (P.ModuleName m) exps = (N.sel (N.var "modules") m,) <$> traverse ident exps
 
-    ffiExports :: [Ident] -> Convert (N.Expr, [N.Ident])
-    ffiExports ffiIdents = do
-      nixIdents <- traverse ident ffiIdents
-      ffiVar <- pure $ N.var "__ffi"
-      pure (ffiVar, nixIdents)
+    foreignBinding :: Ident -> Convert (N.Ident, N.Expr)
+    foreignBinding ffiIdent = do
+      i <- ident ffiIdent
+      pure (i, N.sel (N.var "__ffi") i)
 
 bindings :: [Bind Ann] -> Convert [(N.Ident, N.Expr)]
 bindings = traverse binding . (>>= flatten)
