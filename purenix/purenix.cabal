@@ -42,8 +42,10 @@ library
 
   build-depends:
     , aeson
+    , bytestring
     , containers
     , directory
+    , filepath
     , mtl
     , pretty-simple
     , purescript      ==0.14.4
