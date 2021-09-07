@@ -19,8 +19,8 @@ import Nix.Util (nixKeywords)
 type Convert = ReaderT (FilePath, SourceSpan) (Either Text)
 
 convert :: Module Ann -> Either Text N.Expr
-convert (Module spn _comments _name path imports exports reexports foreign' decls) =
-  runReaderT (module' imports exports reexports foreign' decls ) (path, spn)
+convert (Module spn _comments name path imports exports reexports foreign' decls) =
+  runReaderT (module' name imports exports reexports foreign' decls ) (path, spn)
 
 throw :: Text -> Convert a
 throw err = ask >>= throwError . uncurry format
@@ -49,16 +49,23 @@ localAnn (spn, _, _, _) = localSpan spn
 
 {-# ANN module' ("hlint: ignore" :: String) #-}
 module' ::
+  P.ModuleName ->
   [(Ann, P.ModuleName)] ->
   [Ident] ->
   Map P.ModuleName [Ident] ->
   [Ident] ->
   [Bind Ann] ->
   Convert N.Expr
-module' _imports exports reexports foreign' decls = do
+module' modName _imports exports reexports foreign' decls = do
   let ffiFileBinding =
         if not (null foreign')
-          then [("__ffi", N.app (N.var "import") (N.path "./__ffi.nix"))]
+          then
+            [ ( "__ffi"
+              , N.app
+                  (N.var "import")
+                  (N.path ("./" <> P.runModuleName modName <> "__ffi.nix"))
+              )
+            ]
           else [("__ffi", N.attrs [] [] [])]
   ffiBinds <- traverse foreignBinding foreign'
   binds <- bindings decls
