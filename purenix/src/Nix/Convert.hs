@@ -18,8 +18,9 @@ import Nix.Util (nixKeywords)
 
 type Convert = ReaderT (FilePath, SourceSpan) (Either Text)
 
-convert :: Module Ann -> Either Text N.Expr
-convert (Module spn _comments _name path imports exports reexports _foreign decls) = runReaderT (module' imports exports reexports decls) (path, spn)
+convert :: Module Ann -> Maybe Text -> Either Text N.Expr
+convert (Module spn _comments _name path imports exports reexports _foreign decls) maybeFfiFile =
+  runReaderT (module' imports exports reexports decls maybeFfiFile) (path, spn)
 
 throw :: Text -> Convert a
 throw err = ask >>= throwError . uncurry format
@@ -52,17 +53,17 @@ module' ::
   [Ident] ->
   Map P.ModuleName [Ident] ->
   [Bind Ann] ->
+  Maybe Text ->
   Convert N.Expr
-module' _imports exports reexports decls =
-  (liftA (N.abs "modules"))
-    ( (liftA2 N.let')
-        (bindings decls)
-        ( (liftA3 N.attrs)
-            (traverse ident exports)
-            (traverse (uncurry inheritFrom) (M.toList reexports))
-            (pure mempty)
-        )
-    )
+module' _imports exports reexports decls maybeFfiFile = do
+  binds <- bindings decls
+  expts <- traverse ident exports
+  reexpts <- traverse (uncurry inheritFrom) (M.toList reexports)
+  pure $
+    N.abs "modules" $
+      N.let'
+        binds
+        (N.attrs expts reexpts mempty)
   where
     inheritFrom :: P.ModuleName -> [Ident] -> Convert (N.Expr, [N.Ident])
     inheritFrom (P.ModuleName m) exps = (N.sel (N.var "modules") m,) <$> traverse ident exps
