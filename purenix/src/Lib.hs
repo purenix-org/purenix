@@ -19,7 +19,7 @@ import Nix.Print (renderExpr)
 import Nix.Util (stripAnnMod)
 import System.Directory (createDirectoryIfMissing)
 import Text.Pretty.Simple (pPrint)
-import System.Directory (doesFileExist, getCurrentDirectory)
+import System.Directory (doesFileExist)
 import qualified System.Environment as Env
 import qualified System.Exit as Sys
 import System.FilePath (replaceExtension)
