@@ -6,7 +6,6 @@ module Nix.Convert (convert) where
 
 import Nix.Prelude
 
-import Data.List ((\\))
 import qualified Data.Map as M
 import qualified Data.Text as T
 import Language.PureScript (Ident (..))
