@@ -1,10 +1,8 @@
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module Nix.Convert (convert) where
-
-import Nix.Prelude
 
 import qualified Data.Map as M
 import qualified Data.Text as T
@@ -14,6 +12,7 @@ import Language.PureScript.CoreFn
 import Language.PureScript.Errors (SourceSpan)
 import Language.PureScript.PSString (PSString)
 import qualified Nix.Expr as N
+import Nix.Prelude
 import Nix.Util (nixKeywords)
 
 type Convert = ReaderT (FilePath, SourceSpan) (Either Text)
@@ -108,7 +107,21 @@ expr (Accessor ann sel body) = localAnn ann $ flip N.sel (removeQuotes $ P.prett
 expr (Let ann binds body) = localAnn ann $ liftA2 N.let' (bindings binds) (expr body)
 expr (ObjectUpdate ann a b) = localAnn ann $ liftA2 (N.bin N.Update) (expr a) (attrs b)
 expr Case {} = throw "Cannot yet convert case expression"
-expr Constructor {} = throw "Cannot yet convert constructors"
+expr (Constructor ann (P.ProperName typeName) (P.ProperName dataName) fields) = localAnn ann $ constructor (typeName <> dataName) <$> traverse ident fields
+
+--   Just
+-- becomes
+--   (a: __pattern: __fail: if __pattern ? MaybeJust then __pattern.MaybeJust a else __fail)
+constructor :: N.Ident -> [N.Ident] -> N.Expr
+constructor conName fields =
+  let body =
+        N.abs "__pattern" $
+          N.abs "__fail" $
+            N.cond
+              (N.var "__pattern" `N.has` conName)
+              (foldl (\kont arg -> N.app kont (N.var arg)) (N.sel (N.var "__pattern") conName) fields)
+              (N.var "__fail")
+   in foldr N.abs body fields
 
 ident :: Ident -> Convert N.Ident
 ident (Ident i) = pure i
@@ -134,28 +147,7 @@ checkKeyword w
     -- primops (builtins) in Nix that can be accessed without importing anything.
     -- These were discovered by running `nix repl` and hitting TAB.
     nixPrimops =
-      [ "__add", "__addErrorContext", "__all", "__any", "__appendContext"
-      , "__attrNames", "__attrValues", "__bitAnd", "__bitOr", "__bitXor", "__catAttrs"
-      , "__ceil", "__compareVersions", "__concatLists", "__concatMap"
-      , "__concatStringsSep", "__currentSystem", "__currentTime", "__deepSeq", "__div"
-      , "__elem", "__elemAt", "__fetchurl", "__filter", "__filterSource", "__findFile"
-      , "__floor", "__foldl'", "__fromJSON", "__functionArgs", "__genList"
-      , "__genericClosure", "__getAttr", "__getContext", "__getEnv", "__getFlake"
-      , "__hasAttr", "__hasContext", "__hashFile", "__hashString", "__head"
-      , "__intersectAttrs", "__isAttrs", "__isBool", "__isFloat", "__isFunction"
-      , "__isInt", "__isList", "__isPath", "__isString", "__langVersion", "__length"
-      , "__lessThan", "__listToAttrs", "__mapAttrs", "__match", "__mul", "__nixPath"
-      , "__nixVersion", "__parseDrvName", "__partition", "__path", "__pathExists"
-      , "__readDir", "__readFile", "__replaceStrings", "__seq", "__sort", "__split"
-      , "__splitVersion", "__storeDir", "__storePath", "__stringLength", "__sub"
-      , "__substring", "__tail", "__toFile", "__toJSON", "__toPath", "__toXML"
-      , "__trace", "__tryEval", "__typeOf", "__unsafeDiscardOutputDependency"
-      , "__unsafeDiscardStringContext", "__unsafeGetAttrPos", "abort", "baseNameOf"
-      , "builtins", "derivation", "derivationStrict", "dirOf", "false", "fetchGit"
-      , "fetchMercurial", "fetchTarball", "fetchTree", "fromTOML", "import", "isNull"
-      , "map", "null", "placeholder", "removeAttrs", "scopedImport", "throw"
-      , "toString", "true"
-      ]
+      ["__add", "__addErrorContext", "__all", "__any", "__appendContext", "__attrNames", "__attrValues", "__bitAnd", "__bitOr", "__bitXor", "__catAttrs", "__ceil", "__compareVersions", "__concatLists", "__concatMap", "__concatStringsSep", "__currentSystem", "__currentTime", "__deepSeq", "__div", "__elem", "__elemAt", "__fetchurl", "__filter", "__filterSource", "__findFile", "__floor", "__foldl'", "__fromJSON", "__functionArgs", "__genList", "__genericClosure", "__getAttr", "__getContext", "__getEnv", "__getFlake", "__hasAttr", "__hasContext", "__hashFile", "__hashString", "__head", "__intersectAttrs", "__isAttrs", "__isBool", "__isFloat", "__isFunction", "__isInt", "__isList", "__isPath", "__isString", "__langVersion", "__length", "__lessThan", "__listToAttrs", "__mapAttrs", "__match", "__mul", "__nixPath", "__nixVersion", "__parseDrvName", "__partition", "__path", "__pathExists", "__readDir", "__readFile", "__replaceStrings", "__seq", "__sort", "__split", "__splitVersion", "__storeDir", "__storePath", "__stringLength", "__sub", "__substring", "__tail", "__toFile", "__toJSON", "__toPath", "__toXML", "__trace", "__tryEval", "__typeOf", "__unsafeDiscardOutputDependency", "__unsafeDiscardStringContext", "__unsafeGetAttrPos", "abort", "baseNameOf", "builtins", "derivation", "derivationStrict", "dirOf", "false", "fetchGit", "fetchMercurial", "fetchTarball", "fetchTree", "fromTOML", "import", "isNull", "map", "null", "placeholder", "removeAttrs", "scopedImport", "throw", "toString", "true"]
 
 attrs :: [(PSString, Expr Ann)] -> Convert N.Expr
 attrs = fmap (N.attrs [] []) . traverse attr

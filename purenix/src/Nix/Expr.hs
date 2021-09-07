@@ -17,6 +17,8 @@ data ExprF f
   | Abs Ident f
   | App f f
   | Attrs [Ident] [(f, [Ident])] [(Ident, f)]
+  | Cond f f f
+  | Has f Ident
   | List [f]
   | Bin Op f f
   | Sel f Ident
@@ -40,6 +42,12 @@ abs arg body = Expr $ Abs arg body
 
 app :: Expr -> Expr -> Expr
 app f x = Expr $ App f x
+
+cond :: Expr -> Expr -> Expr -> Expr
+cond c true false = Expr $ Cond c true false
+
+has :: Expr -> Ident -> Expr
+has attr field = Expr $ Has attr field
 
 attrs ::
   [Ident] ->
