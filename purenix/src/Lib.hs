@@ -19,7 +19,7 @@ import Nix.Print (renderExpr)
 import Nix.Util (stripAnnMod)
 import System.Directory (createDirectoryIfMissing)
 import Text.Pretty.Simple (pPrint)
-import System.Directory (doesFileExist)
+import System.Directory (doesFileExist, getCurrentDirectory)
 import qualified System.Environment as Env
 import qualified System.Exit as Sys
 import System.FilePath (replaceExtension)
@@ -40,7 +40,7 @@ defaultMain = do
           putStrLn "successfully decoded purescript module:"
           pPrint (stripAnnMod mdl)
 
-          let ffiFilePath = replaceExtension (modulePath mdl) "nix"
+          let ffiFilePath = "../purescript-cabal-parser/" <> replaceExtension (modulePath mdl) "nix"
           doesFfiFileExist <- doesFileExist ffiFilePath
           maybeFfiFile <-
             if doesFfiFileExist
