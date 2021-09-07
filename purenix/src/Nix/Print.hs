@@ -89,6 +89,7 @@ exprStyle v = bool Single Multi $ elem Multi v
 exprPrec :: ExprF a -> Int
 exprPrec Var {} = 10
 exprPrec Num {} = 10
+exprPrec Path {} = 10
 exprPrec String {} = 10
 exprPrec Attrs {} = 10
 exprPrec List {} = 10
@@ -100,7 +101,6 @@ exprPrec (Bin op _ _) = opPrec op
     opPrec Update = 5
 exprPrec Abs {} = 0
 exprPrec Let {} = 0
-exprPrec Raw {} = 0
 
 parens :: Bool -> Style -> Printer -> Printer
 parens False _ = id
@@ -110,7 +110,6 @@ parenthesize :: ExprF a -> Int -> Bool
 parenthesize Attrs {} = const False
 parenthesize Let {} = const False
 parenthesize List {} = (< 10)
-parenthesize Raw {} = const True
 parenthesize e = (< exprPrec e)
 
 sepBy :: Printer -> [Printer] -> Printer
@@ -143,6 +142,7 @@ ppExpr sty (List l) = delimit sty '[' ']' $ sepBy newline l
 ppExpr _ (Sel a b) = a <> "." <> escape b
 ppExpr _ (String str) = text str
 ppExpr _ (Num n) = string (show n)
+ppExpr _ (Path t) = text t
 ppExpr _ (Let binds body) =
   mconcat
     [ newline,
@@ -153,4 +153,3 @@ ppExpr _ (Let binds body) =
       indent body
     ]
 ppExpr _ (Bin Update l r) = l <> " // " <> r
-ppExpr _ (Raw t) = text t

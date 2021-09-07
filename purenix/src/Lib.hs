@@ -6,9 +6,7 @@ import Nix.Prelude
 
 import Data.Aeson (decode)
 import Data.Aeson.Types (parseEither)
-import qualified Data.ByteString as BS
 import qualified Data.Text as T
-import Data.Text.Encoding (decodeUtf8)
 import Data.Text.Lazy (pack)
 import Data.Text.Lazy.Encoding (encodeUtf8)
 import qualified Data.Text.Lazy.IO as TL
@@ -19,7 +17,7 @@ import Nix.Print (renderExpr)
 import Nix.Util (stripAnnMod)
 import System.Directory (createDirectoryIfMissing)
 import Text.Pretty.Simple (pPrint)
-import System.Directory (doesFileExist)
+import System.Directory (copyFile, doesFileExist)
 import qualified System.Environment as Env
 import qualified System.Exit as Sys
 import System.FilePath (replaceExtension)
@@ -27,7 +25,10 @@ import System.FilePath (replaceExtension)
 defaultMain :: IO ()
 defaultMain = do
   Env.getArgs >>= print
-  corefn <- readFile "../purescript-cabal-parser/output/Main/corefn.json"
+  let modName = "Main"
+      moduleDir = "../purescript-cabal-parser/output/" <> modName <> "/"
+      corefnFilePath = moduleDir <> "corefn.json"
+  corefn <- readFile corefnFilePath
   -- TODO why is this lazy?
   let maybeValue = decode $ encodeUtf8 $ pack corefn
   case maybeValue of
@@ -40,16 +41,13 @@ defaultMain = do
           putStrLn "successfully decoded purescript module:"
           pPrint (stripAnnMod mdl)
 
+          -- Create the output __ffi.nix file for this module if it has foreign imports.
           let ffiFilePath = "../purescript-cabal-parser/" <> replaceExtension (modulePath mdl) "nix"
+          let ffiOutputFilePath = moduleDir <> "__ffi.nix"
           doesFfiFileExist <- doesFileExist ffiFilePath
-          maybeFfiFile <-
-            if doesFfiFileExist
-              then
-                -- TODO: decodeUtf8 can throw an exception
-                Just . decodeUtf8 <$> BS.readFile ffiFilePath
-              else pure Nothing
+          when doesFfiFileExist $ copyFile ffiFilePath ffiOutputFilePath
 
-          let eitherNixExpr = convert mdl maybeFfiFile
+          let eitherNixExpr = convert mdl
           -- pPrint eitherNixExpr
           nix <- either (Sys.die . T.unpack) (pure . renderExpr) eitherNixExpr
           TL.putStrLn nix
