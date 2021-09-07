@@ -40,10 +40,12 @@ defaultMain = do
         Right (_version, mdl) -> do
           putStrLn "successfully decoded purescript module:"
           pPrint (stripAnnMod mdl)
+          let generateDir = "../generated/"
+          createDirectoryIfMissing True generateDir
 
           -- Create the output __ffi.nix file for this module if it has foreign imports.
           let ffiFilePath = "../purescript-cabal-parser/" <> replaceExtension (modulePath mdl) "nix"
-          let ffiOutputFilePath = moduleDir <> "__ffi.nix"
+          let ffiOutputFilePath = generateDir <> modName <> "__ffi.nix"
           doesFfiFileExist <- doesFileExist ffiFilePath
           when doesFfiFileExist $ copyFile ffiFilePath ffiOutputFilePath
 
@@ -53,6 +55,5 @@ defaultMain = do
           TL.putStrLn nix
 
           -- TODO: Transform the purescript module into a .nix file
-          createDirectoryIfMissing True "../generated"
           putStrLn "writing ../generated/Main.nix"
           TL.writeFile "../generated/Main.nix" nix
