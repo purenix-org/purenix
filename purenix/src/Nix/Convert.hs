@@ -18,9 +18,9 @@ import Nix.Util (nixKeywords)
 
 type Convert = ReaderT (FilePath, SourceSpan) (Either Text)
 
-convert :: Module Ann -> Maybe Text -> Either Text N.Expr
-convert (Module spn _comments _name path imports exports reexports foreign' decls) maybeFfiFile =
-  runReaderT (module' imports exports reexports foreign' decls maybeFfiFile) (path, spn)
+convert :: Module Ann -> Either Text N.Expr
+convert (Module spn _comments _name path imports exports reexports foreign' decls) =
+  runReaderT (module' imports exports reexports foreign' decls ) (path, spn)
 
 throw :: Text -> Convert a
 throw err = ask >>= throwError . uncurry format
@@ -54,13 +54,12 @@ module' ::
   Map P.ModuleName [Ident] ->
   [Ident] ->
   [Bind Ann] ->
-  Maybe Text ->
   Convert N.Expr
-module' _imports exports reexports foreign' decls maybeFfiFile = do
+module' _imports exports reexports foreign' decls = do
   let ffiFileBinding =
-        case maybeFfiFile of
-          Just ffiFile -> [("__ffi", N.raw ffiFile)]
-          Nothing -> [("__ffi", N.attrs [] [] [])]
+        if not (null foreign')
+          then [("__ffi", N.app (N.var "import") (N.path "./__ffi.nix"))]
+          else [("__ffi", N.attrs [] [] [])]
   ffiBinds <- traverse foreignBinding foreign'
   binds <- bindings decls
   expts <- traverse ident exports
