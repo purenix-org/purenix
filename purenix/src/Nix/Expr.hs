@@ -23,7 +23,7 @@ data ExprF f
   | Let [(Ident, f)] f
   | Num Integer
   | String Text
-  | Raw Text
+  | Path Text
   deriving stock (Functor, Foldable, Traversable, Show)
 
 data Op = Update
@@ -66,5 +66,5 @@ list = Expr . List
 bin :: Op -> Expr -> Expr -> Expr
 bin op a b = Expr $ Bin op a b
 
-raw :: Text -> Expr
-raw = Expr . Raw
+path :: Text -> Expr
+path = Expr . Path
