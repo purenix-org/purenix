@@ -4,6 +4,7 @@
 
 module Nix.Convert (convert) where
 
+import Data.Foldable (foldrM)
 import qualified Data.Map as M
 import qualified Data.Text as T
 import Language.PureScript (Ident (..))
@@ -106,21 +107,47 @@ expr (Var ann (P.Qualified (Just (P.ModuleName m)) i)) = localAnn ann $ N.sel (N
 expr (Accessor ann sel body) = localAnn ann $ flip N.sel (removeQuotes $ P.prettyPrintObjectKey sel) <$> expr body
 expr (Let ann binds body) = localAnn ann $ liftA2 N.let' (bindings binds) (expr body)
 expr (ObjectUpdate ann a b) = localAnn ann $ liftA2 (N.bin N.Update) (expr a) (attrs b)
-expr Case {} = throw "Cannot yet convert case expression"
 expr (Constructor ann (P.ProperName typeName) (P.ProperName dataName) fields) = localAnn ann $ constructor (typeName <> dataName) <$> traverse ident fields
+expr (Case ann exprs cases) =
+  localAnn ann $ do
+    exprs' <- traverse expr exprs
+    foldrM
+      (addCase exprs')
+      (N.app (N.sel (N.var "builtins") "error") (N.string "Pattern match failure")) -- TODO ask and report the location of the failure
+      cases
+
+addCase :: [N.Expr] -> CaseAlternative Ann -> N.Expr -> Convert N.Expr
+addCase scrutinees = go
+  where
+    go (CaseAlternative [bind] (Right body)) fallthrough = do
+      body' <- expr body
+      pure $ binder bind body' fallthrough
+    go (CaseAlternative _ _) _ = throw "only simple case expressions allowed"
+    scrutinee = unifyExprs scrutinees
+    unifyExprs :: [N.Expr] -> N.Expr
+    unifyExprs = undefined
+    unifyBinders :: [Binder Ann] -> Binder Ann
+    unifyBinders = undefined
+
+binder :: Binder Ann -> N.Expr -> N.Expr -> N.Expr
+binder bind body fallthrough = go bind
+  where
+    go (NullBinder _) = body
+
+-- go (VarBinder var _ ) =
 
 --   Just
 -- becomes
---   (a: __pattern: __fail: if __pattern ? MaybeJust then __pattern.MaybeJust a else __fail)
+--   (a: __pattern: __else: if __pattern ? MaybeJust then __pattern.MaybeJust a else __else)
 constructor :: N.Ident -> [N.Ident] -> N.Expr
 constructor conName fields =
   let body =
         N.abs "__pattern" $
-          N.abs "__fail" $
+          N.abs "__else" $
             N.cond
               (N.var "__pattern" `N.has` conName)
               (foldl (\kont arg -> N.app kont (N.var arg)) (N.sel (N.var "__pattern") conName) fields)
-              (N.var "__fail")
+              (N.var "__else")
    in foldr N.abs body fields
 
 ident :: Ident -> Convert N.Ident
