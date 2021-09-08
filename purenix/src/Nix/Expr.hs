@@ -31,6 +31,18 @@ data ExprF f
 data Op = Update
   deriving (Eq, Show)
 
+{-
+case expa, expb of
+  Nothing, Just a | p a -> c
+
+case e of
+  Nothing -> a
+
+Just = a: m: fail: if m ? Just then m.Just a else fail
+
+e { Nothing = a }
+-}
+
 foldExpr :: (ExprF r -> r) -> Expr -> r
 foldExpr f = go where go = f . fmap go . unExpr
 
