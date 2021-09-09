@@ -18,7 +18,10 @@ import qualified System.FilePath as FP
 
 defaultMain :: IO ()
 defaultMain = do
-  let workdir = "../purescript-cabal-parser/"
+  -- let workdir = "../purescript-parser-combinator/"
+  -- let workdir = "../purescript-unsafe-coerce/"
+  -- let workdir = "../purescript-prelude/"
+  let workdir = "."
   let moduleRoot = workdir </> "output"
   moduleDirs <- filter (/= "cache-db.json") <$> Dir.listDirectory moduleRoot
   forM_ moduleDirs $ \rel -> do

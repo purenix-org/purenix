@@ -12,7 +12,7 @@
           hsPkgs =
             self.haskell-nix.project' rec {
               projectFileName = "stack.yaml";
-              src = ./purenix;
+              src = ./.;
               compiler-nix-name = "ghc8104";
               shell = {
                 tools = {
