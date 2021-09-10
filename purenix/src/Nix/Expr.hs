@@ -6,6 +6,7 @@
 
 module Nix.Expr where
 
+import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.Text as T
 import Nix.Prelude
 
@@ -24,7 +25,7 @@ data ExprF f
   | Bin Op f f
   | Not f
   | Sel f Ident
-  | Let [(Ident, f)] f
+  | Let (NonEmpty (Ident, f)) f
   | Int Integer
   | Double Double
   | String Text
@@ -72,7 +73,8 @@ sel :: Expr -> Ident -> Expr
 sel e s = Expr $ Sel e s
 
 let' :: [(Ident, Expr)] -> Expr -> Expr
-let' binds body = Expr $ Let binds body
+let' [] body = body
+let' (h : t) body = Expr $ Let (h :| t) body
 
 int :: Integer -> Expr
 int = Expr . Int

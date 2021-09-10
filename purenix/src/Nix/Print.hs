@@ -8,6 +8,7 @@
 module Nix.Print (renderExpr) where
 
 import Data.Char (isAlphaNum)
+import Data.Foldable (toList)
 import Data.List (intersperse)
 import Data.Semigroup (mtimesDefault)
 import qualified Data.Text as T
@@ -154,8 +155,8 @@ parenthesize assoc prec no yes = go
     go (Bin op l r) = bin (Bin op) l r
     go e = fmap (below (exprPrec e)) e
 
-sepBy :: Printer -> [Printer] -> Printer
-sepBy sep = mconcat . intersperse sep
+sepBy :: Foldable t => Printer -> t Printer -> Printer
+sepBy sep ps = mconcat $ intersperse sep (toList ps)
 
 quotes :: Printer -> Printer
 quotes p = char '"' <> p <> char '"'
@@ -196,7 +197,7 @@ ppExpr _ (Let binds body) =
       indent $ newline <> sepBy newline (binding <$> binds),
       newline,
       "in",
-      indent body
+      indent $ newline <> body
     ]
 ppExpr _ (Bin Update l r) = l <> " // " <> r
 ppExpr _ (Bin Equals l r) = l <> " == " <> r
