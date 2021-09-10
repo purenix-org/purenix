@@ -122,6 +122,7 @@ exprPrec Double {} = 15
 exprPrec String {} = 15
 exprPrec Attrs {} = 15
 exprPrec List {} = 15
+exprPrec Path {} = 15
 exprPrec Sel {} = 14
 exprPrec App {} = 13
 exprPrec Not {} = 8
