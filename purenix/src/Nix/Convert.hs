@@ -7,12 +7,13 @@ module Nix.Convert (convert) where
 import Data.Bitraversable
 import Data.Foldable (foldrM)
 import qualified Data.Map as M
+import Data.Maybe (fromJust)
 import qualified Data.Text as T
 import Language.PureScript (Ident (..))
 import qualified Language.PureScript as P
 import Language.PureScript.CoreFn
 import Language.PureScript.Errors (SourceSpan)
-import Language.PureScript.PSString (PSString)
+import Language.PureScript.PSString (PSString, decodeString)
 import qualified Nix.Expr as N
 import Nix.Prelude
 import Nix.Util (nixKeywords)
@@ -156,7 +157,7 @@ unbinder (LiteralBinder ann lit) scrut' = localAnn ann $ go lit scrut'
     go :: Literal (Binder Ann) -> N.Expr -> Convert ([N.Expr], [(N.Ident, N.Expr)])
     go (NumericLiteral (Left n)) scrut = pure ([N.bin N.Equals scrut (N.int n)], [])
     go (NumericLiteral (Right x)) scrut = pure ([N.bin N.Equals scrut (N.double x)], [])
-    go (StringLiteral str) scrut = pure ([N.bin N.Equals scrut (N.string $ P.prettyPrintString str)], [])
+    go (StringLiteral str) scrut = (\str' -> ([N.bin N.Equals scrut (N.string str')], [])) <$> string str
     go (CharLiteral char) scrut = pure ([N.bin N.Equals scrut (N.string (T.singleton char))], [])
     go (BooleanLiteral True) scrut = pure ([scrut], [])
     go (BooleanLiteral False) scrut = pure ([N.negate scrut], [])
@@ -207,10 +208,15 @@ attrs = fmap (N.attrs [] []) . traverse attr
 removeQuotes :: Text -> Text
 removeQuotes t = fromMaybe t $ T.stripPrefix "\"" =<< T.stripSuffix "\"" t
 
+string :: PSString -> Convert Text
+string str = case decodeString str of
+  Nothing -> throw "String contained lone surrogates"
+  Just x -> pure x
+
 literal :: Literal (Expr Ann) -> Convert N.Expr
 literal (NumericLiteral (Left n)) = pure $ N.int n
 literal (NumericLiteral (Right _)) = throw "Encountered floating-point literal"
-literal (StringLiteral str) = pure $ N.string $ P.prettyPrintString str
+literal (StringLiteral str) = N.string <$> string str
 literal (CharLiteral chr) = pure $ N.string $ T.singleton chr
 literal (BooleanLiteral b) = pure $ bool (N.var "false") (N.var "true") b
 literal (ArrayLiteral arr) = N.list <$> traverse expr arr
