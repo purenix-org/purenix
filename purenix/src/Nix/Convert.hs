@@ -148,7 +148,7 @@ unbinder (NullBinder _) _ = pure mempty
 unbinder (VarBinder ann name) scrut = localAnn ann $ (\name' -> ([], [(name', scrut)])) <$> ident name
 unbinder (ConstructorBinder ann _ (P.Qualified _ (P.ProperName tag)) fields) scrut =
   localAnn ann $
-    mappend ([N.has scrut tag], []) . mconcat <$> zipWithM (\binder field -> unbinder binder (N.sel scrut field)) fields N.constructorFieldNames
+    mappend ([N.bin N.Equals (N.sel scrut "__tag") (N.string tag)], []) . mconcat <$> zipWithM (\binder field -> unbinder binder (N.sel scrut field)) fields N.constructorFieldNames
 unbinder (NamedBinder ann name binder) scrut = localAnn ann $ do
   name' <- ident name
   mappend ([], [(name', scrut)]) <$> unbinder binder scrut
