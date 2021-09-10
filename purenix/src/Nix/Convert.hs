@@ -116,7 +116,7 @@ expr (Case ann exprs cases) =
     let thunks = zip (N.numberedNames "__scrutinee") exprs'
     cases' <- traverse (alternative (N.var . fst <$> thunks)) cases
     let patternBinds = zip (N.numberedNames "__pattern") (cases' <> [N.app (N.builtin "throw") (N.string "Pattern match failure")])
-    pure $ N.let' (thunks <> patternBinds) (foldr1 N.app (N.var . fst <$> patternBinds))
+    pure $ N.let' patternBinds (foldr1 N.app (N.var . fst <$> patternBinds))
 
 alternative :: [N.Expr] -> CaseAlternative Ann -> Convert N.Expr
 alternative scrutinees = go

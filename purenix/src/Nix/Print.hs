@@ -131,7 +131,7 @@ exprPrec (Bin op _ _) = opPrec op
     opPrec Update = 6
     opPrec Equals = 4
     opPrec And = 3
-exprPrec Cond {} = 1
+exprPrec Cond {} = 0
 exprPrec Lam {} = 0
 exprPrec Let {} = 0
 
@@ -188,7 +188,7 @@ ppExpr _ (String str) = char '"' <> text str <> char '"'
 ppExpr _ (Int n) = string (show n)
 ppExpr _ (Double x) = string (show x)
 ppExpr Single (Cond c t f) = sepBy space ["if", c, "then", t, "else", f]
-ppExpr Multi (Cond c t f) = newline <> "if " <> c <> indent (newline <> "then " <> t <> "else " <> f)
+ppExpr Multi (Cond c t f) = newline <> "if " <> c <> indent (newline <> "then " <> indent t <> newline <> "else " <> indent f)
 ppExpr _ (Not e) = "!" <> e
 ppExpr _ (Let binds body) =
   mconcat
