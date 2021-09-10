@@ -117,14 +117,3 @@ constructor conName fields =
         (("__tag", string conName) : zipWith (\arg name -> (name, var arg)) fields constructorFieldNames)
     )
     fields
-
--- | Takes a list of expressions, assigns names on them, and calls the
--- continuation referring to the names instead of the expressions.
--- This is used in the conversion of case expressions, where we would otherwise
--- re-evaluate the scrutinees in every pattern.
--- -- TODO check if this is true
-memoize :: Functor m => [Expr] -> Text -> ([Expr] -> m Expr) -> m Expr
-memoize exprs namePrefix kont = let' binds <$> kont (var . fst <$> binds)
-  where
-    binds :: [(Ident, Expr)]
-    binds = zip ((\n -> namePrefix <> T.pack (show n)) <$> [1 :: Int ..]) exprs
