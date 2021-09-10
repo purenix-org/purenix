@@ -143,7 +143,7 @@ parenthesize assoc prec no yes = go
     bin op l r = op (f l AssocLeft) (f r AssocRight)
       where
         f x a = case compare (prec x) (exprPrec $ op () ()) of
-          LT -> no x
+          GT -> no x
           EQ | assoc x == a -> no x
           _ -> yes x
     go :: ExprF a -> ExprF b
