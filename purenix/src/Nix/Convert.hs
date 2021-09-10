@@ -113,8 +113,7 @@ expr (Constructor ann _ (P.ProperName dataName) fields) = localAnn ann $ N.const
 expr (Case ann exprs cases) =
   localAnn ann $ do
     exprs' <- traverse expr exprs
-    let thunks = zip (N.numberedNames "__scrutinee") exprs'
-    cases' <- traverse (alternative (N.var . fst <$> thunks)) cases
+    cases' <- traverse (alternative exprs') cases
     let patternBinds = zip (N.numberedNames "__pattern") (cases' <> [N.app (N.builtin "throw") (N.string "Pattern match failure")])
     pure $ N.let' patternBinds (foldr1 N.app (N.var . fst <$> patternBinds))
 
