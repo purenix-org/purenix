@@ -113,10 +113,10 @@ expr (Constructor ann _ (P.ProperName dataName) fields) = localAnn ann $ N.const
 expr (Case ann exprs cases) =
   localAnn ann $ do
     exprs' <- traverse expr exprs
-    N.memoize exprs' "__scrutinee" $ \exprThunks -> do
-      cases' <- traverse (alternative exprThunks) cases
-      let patternBinds = zip (N.numberedNames "__pattern") (cases' <> [N.app (N.builtin "throw") (N.string "Pattern match failure")])
-      pure $ N.let' patternBinds (foldr1 N.app (N.var . fst <$> patternBinds))
+    let thunks = zip (N.numberedNames "__scrutinee") exprs'
+    cases' <- traverse (alternative (N.var . fst <$> thunks)) cases
+    let patternBinds = zip (N.numberedNames "__pattern") (cases' <> [N.app (N.builtin "throw") (N.string "Pattern match failure")])
+    pure $ N.let' (thunks <> patternBinds) (foldr1 N.app (N.var . fst <$> patternBinds))
 
 alternative :: [N.Expr] -> CaseAlternative Ann -> Convert N.Expr
 alternative scrutinees = go
