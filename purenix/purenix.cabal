@@ -46,9 +46,10 @@ library
     , containers
     , directory
     , filepath
+    , microlens-platform
     , mtl
     , pretty-simple
-    , purescript      ==0.14.4
+    , purescript          ==0.14.4
     , purescript-cst
     , text
 

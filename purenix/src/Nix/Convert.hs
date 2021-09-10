@@ -159,7 +159,7 @@ unbinder (LiteralBinder ann lit) scrut' = localAnn ann $ go lit scrut'
     go (StringLiteral str) scrut = pure ([N.bin N.Equals scrut (N.string $ P.prettyPrintString str)], [])
     go (CharLiteral char) scrut = pure ([N.bin N.Equals scrut (N.string (T.singleton char))], [])
     go (BooleanLiteral True) scrut = pure ([scrut], [])
-    go (BooleanLiteral False) scrut = pure ([N.not scrut], [])
+    go (BooleanLiteral False) scrut = pure ([N.negate scrut], [])
     go (ArrayLiteral as) scrut =
       mappend ([N.bin N.Equals (N.app (N.builtin "length") scrut) (N.int (fromIntegral n))], []) . mconcat
         <$> zipWithM (\binder ix -> unbinder binder (elemAt scrut ix)) as [0 :: Integer ..]

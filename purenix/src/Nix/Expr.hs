@@ -102,8 +102,8 @@ numberedNames prefix = fmap (\n -> prefix <> T.pack (show n)) [0 :: Int ..]
 constructorFieldNames :: [Ident]
 constructorFieldNames = numberedNames "__field"
 
-not :: Expr -> Expr
-not = Expr . Not
+negate :: Expr -> Expr
+negate = Expr . Not
 
 builtin :: Text -> Expr
 builtin = sel (var "builtins")
