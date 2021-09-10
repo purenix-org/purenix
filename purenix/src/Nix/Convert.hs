@@ -4,6 +4,7 @@
 
 module Nix.Convert (convert) where
 
+import Data.Bitraversable
 import Data.Foldable (foldrM)
 import qualified Data.Map as M
 import qualified Data.Text as T
@@ -72,7 +73,7 @@ module' modName _imports exports reexports foreign' decls = do
   expts <- traverse ident exports
   reexpts <- traverse (uncurry inheritFrom) (M.toList reexports)
   pure $
-    N.abs "modules" $
+    N.lam "modules" $
       N.let'
         (ffiFileBinding <> ffiBinds <> binds)
         ( N.attrs
@@ -99,7 +100,7 @@ bindings = traverse binding . (>>= flatten)
     flatten (Rec bs) = (\((a, i), e) -> (a, i, e)) <$> bs
 
 expr :: Expr Ann -> Convert N.Expr
-expr (Abs ann arg body) = localAnn ann $ liftA2 N.abs (ident arg >>= checkKeyword) (expr body)
+expr (Abs ann arg body) = localAnn ann $ liftA2 N.lam (ident arg >>= checkKeyword) (expr body)
 expr (Literal ann lit) = localAnn ann $ literal lit
 expr (App ann f x) = localAnn ann $ liftA2 N.app (expr f) (expr x)
 expr (Var ann (P.Qualified Nothing i)) = localAnn ann $ N.var <$> ident i
@@ -107,48 +108,65 @@ expr (Var ann (P.Qualified (Just (P.ModuleName m)) i)) = localAnn ann $ N.sel (N
 expr (Accessor ann sel body) = localAnn ann $ flip N.sel (removeQuotes $ P.prettyPrintObjectKey sel) <$> expr body
 expr (Let ann binds body) = localAnn ann $ liftA2 N.let' (bindings binds) (expr body)
 expr (ObjectUpdate ann a b) = localAnn ann $ liftA2 (N.bin N.Update) (expr a) (attrs b)
-expr (Constructor ann (P.ProperName typeName) (P.ProperName dataName) fields) = localAnn ann $ constructor (typeName <> dataName) <$> traverse ident fields
+expr (Constructor ann _ (P.ProperName dataName) fields) = localAnn ann $ N.constructor dataName <$> traverse ident fields
 expr (Case ann exprs cases) =
   localAnn ann $ do
     exprs' <- traverse expr exprs
-    foldrM
-      (addCase exprs')
-      (N.app (N.sel (N.var "builtins") "error") (N.string "Pattern match failure")) -- TODO ask and report the location of the failure
-      cases
+    N.memoize exprs' "__scrutinee" $ \exprThunks -> do
+      cases' <- traverse (alternative exprThunks) cases
+      let patternBinds = zip (N.numberedNames "__pattern") (cases' <> [N.app (N.builtin "throw") (N.string "Pattern match failure")])
+      pure $ N.let' patternBinds (foldr1 N.app (N.var . fst <$> patternBinds))
 
-addCase :: [N.Expr] -> CaseAlternative Ann -> N.Expr -> Convert N.Expr
-addCase scrutinees = go
+alternative :: [N.Expr] -> CaseAlternative Ann -> Convert N.Expr
+alternative scrutinees = go
   where
-    go (CaseAlternative [bind] (Right body)) fallthrough = do
-      body' <- expr body
-      pure $ binder bind body' fallthrough
-    go (CaseAlternative _ _) _ = throw "only simple case expressions allowed"
-    scrutinee = unifyExprs scrutinees
-    unifyExprs :: [N.Expr] -> N.Expr
-    unifyExprs = undefined
-    unifyBinders :: [Binder Ann] -> Binder Ann
-    unifyBinders = undefined
+    go (CaseAlternative binders body) = do
+      (patternChecks, patternBinds) <- zipBinders scrutinees binders
+      body' <- unguard body (N.var "__fail")
+      pure $
+        N.lam "__fail" $
+          N.cond
+            (foldr1 (N.bin N.And) patternChecks)
+            (N.let' patternBinds body')
+            (N.var "__fail")
 
-binder :: Binder Ann -> N.Expr -> N.Expr -> N.Expr
-binder bind body fallthrough = go bind
+unguard :: Either [(Guard Ann, Expr Ann)] (Expr Ann) -> N.Expr -> Convert N.Expr
+unguard (Right body) _ = expr body
+unguard (Left guardedBodies) failCase = do
+  guardedBodies' <- traverse (bitraverse expr expr) guardedBodies
+  pure $ foldr (uncurry N.cond) failCase guardedBodies'
+
+zipBinders :: [N.Expr] -> [Binder Ann] -> Convert ([N.Expr], [(N.Ident, N.Expr)])
+zipBinders exprs binds = mconcat <$> zipWithM unbinder binds exprs
+
+-- | Turns a binder(/pattern) and a scrutinee into a pair of
+--   - boolean expressions, that all return true iff the pattern applies
+--   - the bindings produced by the pattern
+unbinder :: Binder Ann -> N.Expr -> Convert ([N.Expr], [(N.Ident, N.Expr)])
+unbinder (NullBinder _) _ = pure mempty
+unbinder (VarBinder ann name) scrut = localAnn ann $ (\name' -> ([], [(name', scrut)])) <$> ident name
+unbinder (ConstructorBinder ann _ (P.Qualified _ (P.ProperName tag)) fields) scrut =
+  localAnn ann $
+    mappend ([N.has scrut tag], []) . mconcat <$> zipWithM (\binder field -> unbinder binder (N.sel scrut field)) fields N.constructorFieldNames
+unbinder (NamedBinder ann name binder) scrut = localAnn ann $ do
+  name' <- ident name
+  mappend ([], [(name', scrut)]) <$> unbinder binder scrut
+unbinder (LiteralBinder ann lit) scrut' = localAnn ann $ go lit scrut'
   where
-    go (NullBinder _) = body
-
--- go (VarBinder var _ ) =
-
---   Just
--- becomes
---   (a: __pattern: __else: if __pattern ? MaybeJust then __pattern.MaybeJust a else __else)
-constructor :: N.Ident -> [N.Ident] -> N.Expr
-constructor conName fields =
-  let body =
-        N.abs "__pattern" $
-          N.abs "__else" $
-            N.cond
-              (N.var "__pattern" `N.has` conName)
-              (foldl (\kont arg -> N.app kont (N.var arg)) (N.sel (N.var "__pattern") conName) fields)
-              (N.var "__else")
-   in foldr N.abs body fields
+    go :: Literal (Binder Ann) -> N.Expr -> Convert ([N.Expr], [(N.Ident, N.Expr)])
+    go (NumericLiteral (Left n)) scrut = pure ([N.bin N.Equals scrut (N.int n)], [])
+    go (NumericLiteral (Right x)) scrut = pure ([N.bin N.Equals scrut (N.double x)], [])
+    go (StringLiteral str) scrut = pure ([N.bin N.Equals scrut (N.string $ P.prettyPrintString str)], [])
+    go (CharLiteral char) scrut = pure ([N.bin N.Equals scrut (N.string (T.singleton char))], [])
+    go (BooleanLiteral True) scrut = pure ([scrut], [])
+    go (BooleanLiteral False) scrut = pure ([N.not scrut], [])
+    go (ArrayLiteral as) scrut =
+      mappend ([N.bin N.Equals (N.app (N.builtin "length") scrut) (N.int (fromIntegral n))], []) . mconcat
+        <$> zipWithM (\binder ix -> unbinder binder (elemAt scrut ix)) as [0 :: Integer ..]
+      where
+        n = length as
+        elemAt list ix = N.app (N.app (N.builtin "elemAt") list) (N.int ix)
+    go (ObjectLiteral _) _ = throw "I don't get what object literals are"
 
 ident :: Ident -> Convert N.Ident
 ident (Ident i) = pure i
@@ -170,7 +188,7 @@ checkKeyword w
   | otherwise = pure w
   where
     -- These idents have a special meaning in purenix.
-    purenixIdents = ["modules", "__ffi"]
+    purenixIdents = ["modules", "__tag", "__ffi"]
     -- primops (builtins) in Nix that can be accessed without importing anything.
     -- These were discovered by running `nix repl` and hitting TAB.
     nixPrimops =
@@ -190,7 +208,7 @@ removeQuotes :: Text -> Text
 removeQuotes t = fromMaybe t $ T.stripPrefix "\"" =<< T.stripSuffix "\"" t
 
 literal :: Literal (Expr Ann) -> Convert N.Expr
-literal (NumericLiteral (Left n)) = pure $ N.num n
+literal (NumericLiteral (Left n)) = pure $ N.int n
 literal (NumericLiteral (Right _)) = throw "Encountered floating-point literal"
 literal (StringLiteral str) = pure $ N.string $ P.prettyPrintString str
 literal (CharLiteral chr) = pure $ N.string $ T.singleton chr
