@@ -126,10 +126,13 @@ alternative scrutinees = go
       body' <- unguard body (N.var "__fail")
       pure $
         N.lam "__fail" $
-          N.cond
-            (foldr1 (N.bin N.And) patternChecks)
-            (N.let' patternBinds body')
-            (N.var "__fail")
+          case patternChecks of
+            [] -> N.let' patternBinds body'
+            _ ->
+              N.cond
+                (foldr1 (N.bin N.And) patternChecks)
+                (N.let' patternBinds body')
+                (N.var "__fail")
 
 unguard :: Either [(Guard Ann, Expr Ann)] (Expr Ann) -> N.Expr -> Convert N.Expr
 unguard (Right body) _ = expr body
