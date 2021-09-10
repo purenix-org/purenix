@@ -123,7 +123,6 @@ exprPrec Attrs {} = 15
 exprPrec List {} = 15
 exprPrec Sel {} = 14
 exprPrec App {} = 13
-exprPrec Has {} = 11
 exprPrec Not {} = 8
 exprPrec (Bin op _ _) = opPrec op
   where
@@ -189,7 +188,6 @@ ppExpr _ (Int n) = string (show n)
 ppExpr _ (Double x) = string (show x)
 ppExpr Single (Cond c t f) = sepBy space ["if", c, "then", t, "else", f]
 ppExpr Multi (Cond c t f) = newline <> "if " <> c <> indent (newline <> "then " <> t <> "else " <> f)
-ppExpr _ (Has l r) = l <> " ? " <> text r
 ppExpr _ (Not e) = "!" <> e
 ppExpr _ (Let binds body) =
   mconcat
