@@ -90,7 +90,7 @@ style a _ Single = a
 style _ b Multi = b
 
 exprStyle :: ExprF Style -> Style
-exprStyle (Attrs [_] [] []) = Single
+exprStyle (Attrs _ [] []) = Single
 exprStyle (Attrs [] [(sty, _)] []) = sty
 exprStyle (Attrs [] [] [(_, sty)]) = sty
 exprStyle Attrs {} = Multi
