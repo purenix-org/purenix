@@ -22,7 +22,7 @@ type Convert = ReaderT (FilePath, SourceSpan) (Either Text)
 
 convert :: Module Ann -> Either Text N.Expr
 convert (Module spn _comments name path imports exports reexports foreign' decls) =
-  runReaderT (module' name imports exports reexports foreign' decls ) (path, spn)
+  runReaderT (module' name imports exports reexports foreign' decls) (path, spn)
 
 throw :: Text -> Convert a
 throw err = ask >>= throwError . uncurry format
@@ -62,13 +62,13 @@ module' modName _imports exports reexports foreign' decls = do
   let ffiFileBinding =
         if not (null foreign')
           then
-            [ ( "__ffi"
-              , N.app
+            [ ( "__ffi",
+                N.app
                   (N.var "import")
                   (N.path ("./" <> P.runModuleName modName <> "__ffi.nix"))
               )
             ]
-          else [("__ffi", N.attrs [] [] [])]
+          else []
   ffiBinds <- traverse foreignBinding foreign'
   binds <- bindings decls
   expts <- traverse ident exports
