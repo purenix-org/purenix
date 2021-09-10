@@ -145,7 +145,7 @@ parenthesize assoc prec no yes = go
           EQ | assoc x == a -> no x
           _ -> yes x
     go :: ExprF a -> ExprF b
-    go (Attrs ih ihf f) = Attrs ih (ihf & traverse . _1 %~ no) (f & traverse . _2 %~ yes)
+    go (Attrs ih ihf f) = Attrs ih (ihf & traverse . _1 %~ yes) (f & traverse . _2 %~ no)
     go (Let binds body) = Let (binds & traverse . _2 %~ no) (body & no)
     go (List elems) = List (below 14 <$> elems)
     go (App f x) = bin App f x
@@ -174,8 +174,8 @@ ppExpr _ (App f x) = f <> space <> x
 ppExpr _ (Attrs [] [] []) = "{ }"
 ppExpr sty (Attrs ih ihf b) = delimit sty '{' '}' $ sepBy newline $ inherits <> inheritFroms <> binds
   where
-    inherits = ["inherit " <> sepBy space (text <$> ih) <> ";" | not (null ih)]
-    inheritFroms = (\(from, idents) -> "inherit " <> delimit Single '(' ')' from <> space <> sepBy space (text <$> idents) <> ";") <$> ihf
+    inherits = [sepBy space ("inherit" : (text <$> ih)) <> ";" | not (null ih)]
+    inheritFroms = (\(from, idents) -> sepBy space ("inherit" : from : (text <$> idents)) <> ";") <$> ihf
     binds = binding <$> b
 ppExpr _ (List []) = "[]"
 ppExpr sty (List l) = delimit sty '[' ']' $ sepBy newline l
