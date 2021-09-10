@@ -89,6 +89,9 @@ style a _ Single = a
 style _ b Multi = b
 
 exprStyle :: ExprF Style -> Style
+exprStyle (Attrs [_] [] []) = Single
+exprStyle (Attrs [] [(sty, _)] []) = sty
+exprStyle (Attrs [] [] [(_, sty)]) = sty
 exprStyle Attrs {} = Multi
 exprStyle Let {} = Multi
 exprStyle v = bool Single Multi $ elem Multi v
@@ -159,7 +162,7 @@ quotes :: Printer -> Printer
 quotes p = char '"' <> p <> char '"'
 
 binding :: (Ident, Printer) -> Printer
-binding (ident, body) = escape ident <> " = " <> body <> ";"
+binding (ident, body) = escape ident <> " = " <> indent body <> ";"
 
 escape :: Text -> Printer
 escape t =
