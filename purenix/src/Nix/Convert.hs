@@ -118,6 +118,8 @@ expr (Case ann exprs cases) =
     let patternBinds = zip (N.numberedNames "__pattern") (cases' <> [N.app (N.builtin "throw") (N.string "Pattern match failure")])
     pure $ N.let' patternBinds (foldr1 N.app (N.var . fst <$> patternBinds))
 
+-- | A matches for a given case alternative, against the given list of scrutinees.
+-- Will turn into an expression that takes a failure continuation, and either returns the body or calls the failure continuation
 alternative :: [N.Expr] -> CaseAlternative Ann -> Convert N.Expr
 alternative scrutinees = go
   where
