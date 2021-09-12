@@ -114,7 +114,7 @@ exprAssoc _ = AssocNone
 
 -- | Expression precedence.
 -- See: https://nixos.org/manual/nix/stable/#sec-language-operators
--- Opersators listed in the above table have a precedence of (15 - <listed precedence>)
+-- Operators listed in the above table have a precedence of (15 - <listed precedence>)
 exprPrec :: ExprF a -> Precedence
 exprPrec Var {} = 15
 exprPrec Int {} = 15
