@@ -39,16 +39,6 @@ localSpan spn = local (fmap $ const spn)
 localAnn :: Ann -> Convert a -> Convert a
 localAnn (spn, _, _, _) = localSpan spn
 
--- Module wrapper structure:
--- modules:
--- let
---   bindingA = "foo"
---   bindingB = "bar"
--- in {
---   inherit bindingA;
---   inherit (modules.moduleA) reExportA;
--- }
-
 {-# ANN module' ("hlint: ignore" :: String) #-}
 module' ::
   P.ModuleName ->
@@ -117,8 +107,8 @@ expr (Case ann exprs cases) =
     let patternBinds = zip (N.numberedNames "__pattern") (cases' <> [N.app (N.builtin "throw") (N.string "Pattern match failure")])
     pure $ N.let' patternBinds (foldr1 N.app (N.var . fst <$> patternBinds))
 
--- | A matches for a given case alternative, against the given list of scrutinees.
--- Will turn into an expression that takes a failure continuation, and either returns the body or calls the failure continuation
+-- | Generates a matcher for a given case alternative, against the given list of scrutinees.
+-- A matcher takes a failure continuation, and either calls the expression body with the matched names in scope, or if the matcher fails, the failure continutation.
 alternative :: [N.Expr] -> CaseAlternative Ann -> Convert N.Expr
 alternative scrutinees = go
   where
@@ -135,6 +125,8 @@ alternative scrutinees = go
                 (N.let' patternBinds body')
                 (N.var "__fail")
 
+-- | Generates a matcher (see 'alternative') for a potentially guarded 'CaseAlternative' body.
+-- For guards, we test every guard in order with the failure continuation as the final case.
 unguard :: Either [(Guard Ann, Expr Ann)] (Expr Ann) -> N.Expr -> Convert N.Expr
 unguard (Right body) _ = expr body
 unguard (Left guardedBodies) failCase = do
