@@ -4,6 +4,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
 
 module Nix.Print (renderExpr) where
 
@@ -99,7 +100,7 @@ exprStyle v = bool Single Multi $ elem Multi v
 
 newtype Precedence = Precedence Int deriving newtype (Num, Eq, Ord)
 
-data Associativity = AssocLeft | AssocRight | AssocNone
+data Associativity = AssocLeft | AssocRight | AssocNone | Associative
   deriving (Eq, Show)
 
 exprAssoc :: ExprF a -> Associativity
@@ -107,9 +108,9 @@ exprAssoc Sel {} = AssocLeft
 exprAssoc App {} = AssocLeft
 exprAssoc (Bin op _ _) = opAssoc op
   where
-    opAssoc Update = AssocRight
     opAssoc Equals = AssocNone
-    opAssoc And = AssocLeft
+    opAssoc Update = Associative
+    opAssoc And = Associative
 exprAssoc _ = AssocNone
 
 -- | Expression precedence.
@@ -146,7 +147,7 @@ parenthesize assoc prec no yes = go
       where
         f x a = case compare (prec x) (exprPrec $ op () ()) of
           GT -> no x
-          EQ | assoc x == a -> no x
+          EQ | assoc x `elem` [a, Associative] -> no x
           _ -> yes x
     go :: ExprF a -> ExprF b
     go (Attrs ih ihf f) = Attrs ih (ihf & traverse . _1 %~ yes) (f & traverse . _2 %~ no)
