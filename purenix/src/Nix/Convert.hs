@@ -91,7 +91,7 @@ expr (Literal ann lit) = localAnn ann $ literal lit
 expr (App ann f x) = localAnn ann $ liftA2 N.app (expr f) (expr x)
 expr (Var ann (P.Qualified Nothing i)) = localAnn ann $ N.var <$> ident i
 expr (Var ann (P.Qualified (Just (P.ModuleName m)) i)) = localAnn ann $ N.sel (N.sel (N.var "modules") m) <$> ident i
-expr (Accessor ann sel body) = localAnn ann $ flip N.sel (removeQuotes $ P.prettyPrintObjectKey sel) <$> expr body
+expr (Accessor ann sel body) = localAnn ann $ flip N.sel (stringToKey sel) <$> expr body
 expr (Let ann binds body) = localAnn ann $ liftA2 N.let' (bindings binds) (expr body)
 expr (ObjectUpdate ann a b) = localAnn ann $ liftA2 (N.bin N.Update) (expr a) (attrs b)
 expr (Constructor ann _ (P.ProperName dataName) fields) = localAnn ann $ N.constructor dataName <$> traverse ident fields
@@ -158,7 +158,7 @@ unbinder (LiteralBinder ann lit) scrut' = localAnn ann $ go lit scrut'
       where
         n = length as
         elemAt list ix = N.app (N.app (N.builtin "elemAt") list) (N.int ix)
-    go (ObjectLiteral _) _ = throw "I don't get what object literals are"
+    go (ObjectLiteral fields) scrut = mconcat <$> traverse (\(field, binder) -> unbinder binder (N.sel scrut (stringToKey field))) fields
 
 ident :: Ident -> Convert N.Ident
 ident (Ident i) = pure i
@@ -189,15 +189,13 @@ checkKeyword w
 attrs :: [(PSString, Expr Ann)] -> Convert N.Expr
 attrs = fmap (N.attrs [] []) . traverse attr
   where
-    attr (string, body) = (removeQuotes $ P.prettyPrintString string,) <$> expr body
+    attr (string, body) = (stringToKey string,) <$> expr body
 
--- | The 'P.prettyPrintString' and 'P.prettyPrintObjectKey' functions will
--- sometimes generate strings with quotes around them.
---
--- However, the purenix pretty-printer adds quotes when necessary,
--- so we drop surrounding quotes here if there are any.
-removeQuotes :: Text -> Text
-removeQuotes t = fromMaybe t $ T.stripPrefix "\"" =<< T.stripSuffix "\"" t
+stringToKey :: PSString -> N.Ident
+stringToKey = removeQuotes . P.prettyPrintObjectKey
+  where
+    removeQuotes :: Text -> Text
+    removeQuotes t = fromMaybe t $ T.stripPrefix "\"" =<< T.stripSuffix "\"" t
 
 string :: PSString -> Convert Text
 string str = case decodeString str of
