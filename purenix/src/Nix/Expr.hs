@@ -102,7 +102,7 @@ constructor conName fields =
   foldr
     lam
     ( attrs
-        fields
+        []
         []
         (("__tag", string conName) : zipWith (\arg name -> (name, var arg)) fields constructorFieldNames)
     )
