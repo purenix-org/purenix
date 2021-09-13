@@ -28,7 +28,7 @@ throw err = ask >>= throwError . uncurry format
   where
     format fp spn =
       T.unlines
-        [ mconcat ["Error in ", T.pack fp, " at ", P.displayStartEndPosShort spn, ":"],
+        [ T.concat ["Error in ", T.pack fp, " at ", P.displayStartEndPosShort spn, ":"],
           err
         ]
 
@@ -99,8 +99,16 @@ expr (Case ann exprs cases) =
   localAnn ann $ do
     exprs' <- traverse expr exprs
     cases' <- traverse (alternative exprs') cases
-    let patternBinds = zip (N.numberedNames "__pattern") (cases' <> [N.app (N.builtin "throw") (N.string "Pattern match failure")])
-    pure $ N.let' patternBinds (foldr1 N.app (N.var . fst <$> patternBinds))
+    (fp, spn) <- ask
+    let patternCases = zip (N.numberedNames "__pattern") cases'
+        patternFail =
+          ( "__patternFail",
+            N.app
+              (N.builtin "throw")
+              (N.string $ T.concat ["Pattern match failure in ", T.pack fp, " at ", P.displayStartEndPosShort spn])
+          )
+        patterns = patternCases <> [patternFail]
+    pure $ N.let' patterns (foldr1 N.app (N.var . fst <$> patterns))
 
 -- | Generates a matcher for a given case alternative, against the given list of scrutinees.
 -- A matcher takes a failure continuation, and either calls the expression body with the matched names in scope, or if the matcher fails, the failure continutation.
