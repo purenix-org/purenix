@@ -143,22 +143,22 @@ unbinder (ConstructorBinder ann _ (P.Qualified _ (P.ProperName tag)) fields) scr
 unbinder (NamedBinder ann name binder) scrut = localAnn ann $ do
   name' <- ident name
   mappend ([], [(name', scrut)]) <$> unbinder binder scrut
-unbinder (LiteralBinder ann lit) scrut' = localAnn ann $ go lit scrut'
+unbinder (LiteralBinder ann lit) scrut' = localAnn ann $ litBinder lit scrut'
   where
-    go :: Literal (Binder Ann) -> N.Expr -> Convert ([N.Expr], [(N.Ident, N.Expr)])
-    go (NumericLiteral (Left n)) scrut = pure ([N.bin N.Equals scrut (N.int n)], [])
-    go (NumericLiteral (Right x)) scrut = pure ([N.bin N.Equals scrut (N.double x)], [])
-    go (StringLiteral str) scrut = (\str' -> ([N.bin N.Equals scrut (N.string str')], [])) <$> string str
-    go (CharLiteral char) scrut = pure ([N.bin N.Equals scrut (N.string (T.singleton char))], [])
-    go (BooleanLiteral True) scrut = pure ([scrut], [])
-    go (BooleanLiteral False) scrut = pure ([N.negate scrut], [])
-    go (ArrayLiteral as) scrut =
+    litBinder :: Literal (Binder Ann) -> N.Expr -> Convert ([N.Expr], [(N.Ident, N.Expr)])
+    litBinder (NumericLiteral (Left n)) scrut = pure ([N.bin N.Equals scrut (N.int n)], [])
+    litBinder (NumericLiteral (Right x)) scrut = pure ([N.bin N.Equals scrut (N.double x)], [])
+    litBinder (StringLiteral str) scrut = (\str' -> ([N.bin N.Equals scrut (N.string str')], [])) <$> string str
+    litBinder (CharLiteral char) scrut = pure ([N.bin N.Equals scrut (N.string (T.singleton char))], [])
+    litBinder (BooleanLiteral True) scrut = pure ([scrut], [])
+    litBinder (BooleanLiteral False) scrut = pure ([N.negate scrut], [])
+    litBinder (ArrayLiteral as) scrut =
       mappend ([N.bin N.Equals (N.app (N.builtin "length") scrut) (N.int (fromIntegral n))], []) . mconcat
         <$> zipWithM (\binder ix -> unbinder binder (elemAt scrut ix)) as [0 :: Integer ..]
       where
         n = length as
         elemAt list ix = N.app (N.app (N.builtin "elemAt") list) (N.int ix)
-    go (ObjectLiteral fields) scrut = mconcat <$> traverse (\(field, binder) -> unbinder binder (N.sel scrut (stringToKey field))) fields
+    litBinder (ObjectLiteral fields) scrut = mconcat <$> traverse (\(field, binder) -> unbinder binder (N.sel scrut (stringToKey field))) fields
 
 ident :: Ident -> Convert N.Ident
 ident (Ident i) = pure i
