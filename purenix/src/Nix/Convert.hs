@@ -1,13 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
 
 module Nix.Convert (convert) where
 
 import Data.Bitraversable
-import Data.Foldable (foldrM)
 import qualified Data.Map as M
-import Data.Maybe (fromJust)
 import qualified Data.Text as T
 import Language.PureScript (Ident (..))
 import qualified Language.PureScript as P
