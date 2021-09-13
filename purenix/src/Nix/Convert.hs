@@ -39,7 +39,7 @@ localSpan spn = local (fmap $ const spn)
 localAnn :: Ann -> Convert a -> Convert a
 localAnn (spn, _, _, _) = localSpan spn
 
-{-# ANN module' ("hlint: ignore" :: String) #-}
+{-# ANN module' ("hlint: ignore Use list comprehension" :: String) #-}
 module' ::
   P.ModuleName ->
   [(Ann, P.ModuleName)] ->
@@ -67,11 +67,7 @@ module' modName _imports exports reexports foreign' decls = do
     N.lam "modules" $
       N.let'
         (ffiFileBinding <> ffiBinds <> binds)
-        ( N.attrs
-            (expts <> ["__ffi"])
-            reexpts
-            mempty
-        )
+        (N.attrs expts reexpts mempty)
   where
     inheritFrom :: P.ModuleName -> [Ident] -> Convert (N.Expr, [N.Ident])
     inheritFrom (P.ModuleName m) exps = (N.sel (N.var "modules") m,) <$> traverse ident exps
