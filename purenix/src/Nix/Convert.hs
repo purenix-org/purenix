@@ -212,7 +212,7 @@ string str = case decodeString str of
 
 literal :: Literal (Expr Ann) -> Convert N.Expr
 literal (NumericLiteral (Left n)) = pure $ N.int n
-literal (NumericLiteral (Right _)) = throw "Encountered floating-point literal"
+literal (NumericLiteral (Right n)) = pure $ N.double n
 literal (StringLiteral str) = N.string <$> string str
 literal (CharLiteral chr) = pure $ N.string $ T.singleton chr
 literal (BooleanLiteral b) = pure $ bool (N.var "false") (N.var "true") b
