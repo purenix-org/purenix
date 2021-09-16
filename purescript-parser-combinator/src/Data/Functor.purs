@@ -1,15 +1,16 @@
 module Data.Functor
-  -- ( class Functor, map, (<$>)
-  -- , mapFlipped, (<#>)
-  -- , void
-  -- , voidRight, (<$)
-  -- , voidLeft, ($>)
-  -- , flap, (<@>)
-  -- )
+  ( class Functor, map, (<$>)
+  , mapFlipped, (<#>)
+  , void
+  , voidRight, (<$)
+  , voidLeft, ($>)
+  , flap, (<@>)
+  )
   where
 
 import Data.Function (const, compose)
 import Data.Unit (Unit, unit)
+import Type.Proxy (Proxy(..))
 
 -- | A `Functor` is a type constructor which supports a mapping operation
 -- | `map`.
@@ -39,6 +40,9 @@ infixl 1 mapFlipped as <#>
 
 instance functorFn :: Functor ((->) r) where
   map = compose
+
+instance functorProxy :: Functor Proxy where
+    map _ _ = Proxy
 
 -- | The `void` function is used to ignore the type wrapped by a
 -- | [`Functor`](#functor), replacing it with `Unit` and keeping only the type
