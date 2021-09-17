@@ -2,8 +2,6 @@
 
 module Lib where
 
-import Nix.Prelude
-
 import Data.Aeson (decode)
 import Data.Aeson.Types (parseEither)
 import qualified Data.Text as T
@@ -13,14 +11,14 @@ import qualified Data.Text.Lazy.IO as TL
 import Language.PureScript.CoreFn (modulePath)
 import Language.PureScript.CoreFn.FromJSON (moduleFromJSON)
 import Nix.Convert (convert)
+import Nix.Prelude
 import Nix.Print (renderExpr)
 import Nix.Util (stripAnnMod)
-import System.Directory (createDirectoryIfMissing)
-import Text.Pretty.Simple (pPrint)
-import System.Directory (copyFile, doesFileExist)
+import System.Directory (copyFile, createDirectoryIfMissing, doesFileExist)
 import qualified System.Environment as Env
 import qualified System.Exit as Sys
 import System.FilePath (replaceExtension)
+import Text.Pretty.Simple (pPrint)
 
 defaultMain :: IO ()
 defaultMain = do
@@ -43,9 +41,9 @@ defaultMain = do
           let generateDir = "../generated/"
           createDirectoryIfMissing True generateDir
 
-          -- Create the output __ffi.nix file for this module if it has foreign imports.
+          -- Create the output foreign.nix file for this module if it has foreign imports.
           let ffiFilePath = "../purescript-cabal-parser/" <> replaceExtension (modulePath mdl) "nix"
-          let ffiOutputFilePath = generateDir <> modName <> "__ffi.nix"
+          let ffiOutputFilePath = generateDir <> modName <> "foreign.nix"
           doesFfiFileExist <- doesFileExist ffiFilePath
           when doesFfiFileExist $ copyFile ffiFilePath ffiOutputFilePath
 
