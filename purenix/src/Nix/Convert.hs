@@ -17,16 +17,16 @@ import qualified Nix.Expr as N
 import Nix.Prelude
 import Nix.Util (nixKeywords)
 
-type Convert = ReaderT (FilePath, SourceSpan) (Either Text)
+type Convert = ReaderT (FilePath, P.ModuleName, SourceSpan) (Either Text)
 
 convert :: Module Ann -> Either Text N.Expr
 convert (Module spn _comments name path imports exports reexports foreign' decls) =
-  runReaderT (module' name imports exports reexports foreign' decls) (path, spn)
+  runReaderT (module' name imports exports reexports foreign' decls) (path, name, spn)
 
 throw :: Text -> Convert a
-throw err = ask >>= throwError . uncurry format
+throw err = ask >>= throwError . format
   where
-    format fp spn =
+    format (fp, _, spn) =
       T.unlines
         [ T.concat ["Error in ", T.pack fp, " at ", P.displayStartEndPosShort spn, ":"],
           err
@@ -47,34 +47,36 @@ module' ::
   [Ident] ->
   [Bind Ann] ->
   Convert N.Expr
-module' modName _imports exports reexports foreign' decls = do
+module' modName imports exports reexports foreign' decls = do
   let ffiFileBinding =
         if not (null foreign')
           then
-            [ ( "__ffi",
+            [ ( "foreign",
                 N.app
                   (N.var "import")
-                  (N.path ("./" <> P.runModuleName modName <> "__ffi.nix"))
+                  (N.path ("./" <> P.runModuleName modName <> "foreign.nix"))
               )
             ]
           else []
+  let importBinding =
+        let toImport (_, P.ModuleName moduleName) = (moduleName, N.app (N.var "import") (N.path ("../" <> moduleName)))
+         in [("module", N.attrs [] [] (toImport <$> imports))]
   ffiBinds <- traverse foreignBinding foreign'
   binds <- bindings decls
   expts <- traverse ident exports
   reexpts <- traverse (uncurry inheritFrom) (M.toList reexports)
   pure $
-    N.lam "modules" $
-      N.let'
-        (ffiFileBinding <> ffiBinds <> binds)
-        (N.attrs expts reexpts mempty)
+    N.let'
+      (importBinding <> ffiFileBinding <> ffiBinds <> binds)
+      (N.attrs expts reexpts mempty)
   where
     inheritFrom :: P.ModuleName -> [Ident] -> Convert (N.Expr, [N.Ident])
-    inheritFrom (P.ModuleName m) exps = (N.sel (N.var "modules") m,) <$> traverse ident exps
+    inheritFrom (P.ModuleName m) exps = (N.sel (N.var "module") m,) <$> traverse ident exps
 
     foreignBinding :: Ident -> Convert (N.Ident, N.Expr)
     foreignBinding ffiIdent = do
       i <- ident ffiIdent
-      pure (i, N.sel (N.var "__ffi") i)
+      pure (i, N.sel (N.var "foreign") i)
 
 bindings :: [Bind Ann] -> Convert [(N.Ident, N.Expr)]
 bindings = traverse binding . (>>= flatten)
@@ -89,8 +91,13 @@ expr :: Expr Ann -> Convert N.Expr
 expr (Abs ann arg body) = localAnn ann $ liftA2 N.lam (ident arg >>= checkKeyword) (expr body)
 expr (Literal ann lit) = localAnn ann $ literal lit
 expr (App ann f x) = localAnn ann $ liftA2 N.app (expr f) (expr x)
-expr (Var ann (P.Qualified Nothing i)) = localAnn ann $ N.var <$> ident i
-expr (Var ann (P.Qualified (Just (P.ModuleName m)) i)) = localAnn ann $ N.sel (N.sel (N.var "modules") m) <$> ident i
+expr (Var ann (P.Qualified mqual name)) = localAnn ann $ do
+  (_, thisModule, _) <- ask
+  name' <- ident name
+  pure $ case mqual of
+    Just qual
+      | qual /= thisModule -> N.sel (N.sel (N.var "module") (P.runModuleName qual)) name'
+    _ -> N.var name'
 expr (Accessor ann sel body) = localAnn ann $ flip N.sel (stringToKey sel) <$> expr body
 expr (Let ann binds body) = localAnn ann $ liftA2 N.let' (bindings binds) (expr body)
 expr (ObjectUpdate ann a b) = localAnn ann $ liftA2 (N.bin N.Update) (expr a) (attrs b)
@@ -99,7 +106,7 @@ expr (Case ann exprs cases) =
   localAnn ann $ do
     exprs' <- traverse expr exprs
     cases' <- traverse (alternative exprs') cases
-    (fp, spn) <- ask
+    (fp, _, spn) <- ask
     let patternCases = zip (N.numberedNames "__pattern") cases'
         patternFail =
           ( "__patternFail",
@@ -188,7 +195,7 @@ checkKeyword w
   | otherwise = pure w
   where
     -- These idents have a special meaning in purenix.
-    purenixIdents = ["modules", "__tag", "__ffi"]
+    purenixIdents = ["module", "__tag", "foreign"]
     -- primops (builtins) in Nix that can be accessed without importing anything.
     -- These were discovered by running `nix repl` and hitting TAB.
     nixPrimops =
