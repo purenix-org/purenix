@@ -194,12 +194,13 @@ checkKeyword w
   | w `elem` nixPrimops = throw $ "binder " <> w <> " is a nix primop.  You probably don't want to shadow this."
   | otherwise = pure w
   where
-    -- These idents have a special meaning in purenix.
+    -- These are keywords in either purenix or nix itself, and therefore shouldn't be shadowed.
+    -- We could silently rename, but that's fragile, so for now we just warn not to use these.
+    -- Note that with the exception of "builtins", everything without leading underscores are all keywords in purescript as well, so this shouldn't generally be an issue.
+    -- TODO __fieldX keywords
+    -- TODO Check how this is handled for attrset keys
     purenixIdents = ["module", "__tag", "foreign"]
-    -- primops (builtins) in Nix that can be accessed without importing anything.
-    -- These were discovered by running `nix repl` and hitting TAB.
-    nixPrimops =
-      ["__add", "__addErrorContext", "__all", "__any", "__appendContext", "__attrNames", "__attrValues", "__bitAnd", "__bitOr", "__bitXor", "__catAttrs", "__ceil", "__compareVersions", "__concatLists", "__concatMap", "__concatStringsSep", "__currentSystem", "__currentTime", "__deepSeq", "__div", "__elem", "__elemAt", "__fetchurl", "__filter", "__filterSource", "__findFile", "__floor", "__foldl'", "__fromJSON", "__functionArgs", "__genList", "__genericClosure", "__getAttr", "__getContext", "__getEnv", "__getFlake", "__hasAttr", "__hasContext", "__hashFile", "__hashString", "__head", "__intersectAttrs", "__isAttrs", "__isBool", "__isFloat", "__isFunction", "__isInt", "__isList", "__isPath", "__isString", "__langVersion", "__length", "__lessThan", "__listToAttrs", "__mapAttrs", "__match", "__mul", "__nixPath", "__nixVersion", "__parseDrvName", "__partition", "__path", "__pathExists", "__readDir", "__readFile", "__replaceStrings", "__seq", "__sort", "__split", "__splitVersion", "__storeDir", "__storePath", "__stringLength", "__sub", "__substring", "__tail", "__toFile", "__toJSON", "__toPath", "__toXML", "__trace", "__tryEval", "__typeOf", "__unsafeDiscardOutputDependency", "__unsafeDiscardStringContext", "__unsafeGetAttrPos", "abort", "baseNameOf", "builtins", "derivation", "derivationStrict", "dirOf", "false", "fetchGit", "fetchMercurial", "fetchTarball", "fetchTree", "fromTOML", "import", "isNull", "map", "null", "placeholder", "removeAttrs", "scopedImport", "throw", "toString", "true"]
+    nixPrimops = ["builtins", "import", "false", "true"]
 
 attrs :: [(PSString, Expr Ann)] -> Convert N.Expr
 attrs = fmap (N.attrs [] []) . traverse attr
