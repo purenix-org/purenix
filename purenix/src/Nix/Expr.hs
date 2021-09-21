@@ -7,25 +7,23 @@
 module Nix.Expr where
 
 import Data.List.NonEmpty (NonEmpty (..))
-import qualified Data.Text as T
+import Nix.Identifiers
 import Nix.Prelude
-
-type Ident = Text
 
 newtype Expr = Expr {unExpr :: ExprF Expr}
   deriving newtype (Show)
 
 data ExprF f
-  = Var Ident
-  | Lam Ident f
+  = Var Var
+  | Lam Var f
   | App f f
-  | Attrs [Ident] [(f, [Ident])] [(Ident, f)]
+  | Attrs [Var] [(f, [Key])] [(Key, f)]
   | Cond f f f
   | List [f]
   | Bin Op f f
   | Not f
-  | Sel f Ident
-  | Let (NonEmpty (Ident, f)) f
+  | Sel f Key
+  | Let (NonEmpty (Var, f)) f
   | Int Integer
   | Double Double
   | String Text
@@ -38,10 +36,10 @@ data Op = Update | Equals | And
 foldExpr :: (ExprF r -> r) -> Expr -> r
 foldExpr f = go where go = f . fmap go . unExpr
 
-var :: Ident -> Expr
+var :: Var -> Expr
 var = Expr . Var
 
-lam :: Ident -> Expr -> Expr
+lam :: Var -> Expr -> Expr
 lam arg body = Expr $ Lam arg body
 
 app :: Expr -> Expr -> Expr
@@ -51,16 +49,16 @@ cond :: Expr -> Expr -> Expr -> Expr
 cond c true false = Expr $ Cond c true false
 
 attrs ::
-  [Ident] ->
-  [(Expr, [Ident])] ->
-  [(Ident, Expr)] ->
+  [Var] ->
+  [(Expr, [Key])] ->
+  [(Key, Expr)] ->
   Expr
 attrs inherits inheritFroms binds = Expr $ Attrs inherits inheritFroms binds
 
-sel :: Expr -> Ident -> Expr
+sel :: Expr -> Key -> Expr
 sel e s = Expr $ Sel e s
 
-let' :: [(Ident, Expr)] -> Expr -> Expr
+let' :: [(Var, Expr)] -> Expr -> Expr
 let' [] body = body
 let' (h : t) body = Expr $ Let (h :| t) body
 
@@ -82,28 +80,25 @@ bin op a b = Expr $ Bin op a b
 path :: Text -> Expr
 path = Expr . Path
 
-numberedNames :: Text -> [Ident]
-numberedNames prefix = fmap (\n -> prefix <> T.pack (show n)) [0 :: Int ..]
+constructorFieldNames :: [Var]
+constructorFieldNames = numberedVars "__field"
 
-constructorFieldNames :: [Ident]
-constructorFieldNames = numberedNames "__field"
+not' :: Expr -> Expr
+not' = Expr . Not
 
-negate :: Expr -> Expr
-negate = Expr . Not
-
-builtin :: Text -> Expr
+builtin :: Key -> Expr
 builtin = sel (var "builtins")
 
 --   Just
 -- becomes
 --   (a: { __tag = "Just"; __field0 = a; })
-constructor :: Ident -> [Ident] -> Expr
+constructor :: Text -> [Var] -> Expr
 constructor conName fields =
   foldr
     lam
     ( attrs
         []
         []
-        (("__tag", string conName) : zipWith (\arg name -> (name, var arg)) fields constructorFieldNames)
+        (("__tag", string conName) : zipWith (\arg (UnsafeVar name) -> (UnsafeKey name, var arg)) fields constructorFieldNames)
     )
     fields

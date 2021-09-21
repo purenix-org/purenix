@@ -36,6 +36,7 @@ library
   other-modules:
     Nix.Convert
     Nix.Expr
+    Nix.Identifiers
     Nix.Prelude
     Nix.Print
     Nix.Util

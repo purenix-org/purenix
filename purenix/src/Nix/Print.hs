@@ -8,17 +8,15 @@
 
 module Nix.Print (renderExpr) where
 
-import Data.Char (isAlphaNum)
 import Data.Foldable (toList)
 import Data.List (intersperse)
 import Data.Semigroup (mtimesDefault)
-import qualified Data.Text as T
 import Data.Text.Lazy.Builder (Builder)
 import qualified Data.Text.Lazy.Builder as TB
 import Lens.Micro.Platform
 import Nix.Expr hiding (string)
+import Nix.Identifiers
 import Nix.Prelude
-import Nix.Util (nixKeywords)
 
 newtype PrintContext = PrintContext {pcIndent :: Int}
 
@@ -160,31 +158,28 @@ parenthesize assoc prec no yes = go
 sepBy :: Foldable t => Printer -> t Printer -> Printer
 sepBy sep ps = mconcat $ intersperse sep (toList ps)
 
-quotes :: Printer -> Printer
-quotes p = char '"' <> p <> char '"'
+binding :: (k -> Printer) -> (k, Printer) -> Printer
+binding f (v, body) = f v <> " = " <> indent body <> ";"
 
-binding :: (Ident, Printer) -> Printer
-binding (ident, body) = escape ident <> " = " <> indent body <> ";"
+binder :: Var -> Printer
+binder = text . unVar
 
-escape :: Text -> Printer
-escape t =
-  if T.all (\c -> isAlphaNum c || c == '_') t && (t `notElem` nixKeywords)
-    then text t
-    else quotes (text t)
+key :: Key -> Printer
+key = text . unKey
 
 ppExpr :: Style -> ExprF Printer -> Printer
-ppExpr _ (Var i) = text i
-ppExpr _ (Lam arg body) = text arg <> ": " <> body
+ppExpr _ (Var v) = binder v
+ppExpr _ (Lam arg body) = text (unVar arg) <> ": " <> body
 ppExpr _ (App f x) = f <> space <> x
 ppExpr _ (Attrs [] [] []) = "{ }"
 ppExpr sty (Attrs ih ihf b) = delimit sty '{' '}' $ sepBy newline $ inherits <> inheritFroms <> binds
   where
-    inherits = [sepBy space ("inherit" : (text <$> ih)) <> ";" | not (null ih)]
-    inheritFroms = (\(from, idents) -> sepBy space ("inherit" : from : (text <$> idents)) <> ";") <$> ihf
-    binds = binding <$> b
+    inherits = [sepBy space ("inherit" : (binder <$> ih)) <> ";" | not (null ih)]
+    inheritFroms = (\(from, idents) -> sepBy space ("inherit" : from : (key <$> idents)) <> ";") <$> ihf
+    binds = binding key <$> b
 ppExpr _ (List []) = "[]"
 ppExpr sty (List l) = delimit sty '[' ']' $ sepBy newline l
-ppExpr _ (Sel a b) = a <> "." <> escape b
+ppExpr _ (Sel a b) = a <> "." <> key b
 ppExpr _ (Path t) = text t
 ppExpr _ (String str) = char '"' <> text str <> char '"'
 ppExpr _ (Int n) = string (show n)
@@ -196,7 +191,7 @@ ppExpr _ (Let binds body) =
   mconcat
     [ newline,
       "let",
-      indent $ newline <> sepBy newline (binding <$> binds),
+      indent $ newline <> sepBy newline (binding binder <$> binds),
       newline,
       "in",
       indent $ newline <> body
