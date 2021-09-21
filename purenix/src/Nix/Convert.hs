@@ -47,16 +47,10 @@ module' ::
   [Ident] ->
   [Bind Ann] ->
   Convert N.Expr
-module' modName imports exports reexports foreign' decls = do
+module' _modName imports exports reexports foreign' decls = do
   let ffiFileBinding =
         if not (null foreign')
-          then
-            [ ( "foreign",
-                N.app
-                  (N.var "import")
-                  (N.path ("./" <> P.runModuleName modName <> "foreign.nix"))
-              )
-            ]
+          then [("foreign", N.app (N.var "import") (N.path "./foreign.nix"))]
           else []
   let importBinding =
         let toImport (_, mdl) = (N.moduleKey mdl, N.app (N.var "import") (N.path ("../" <> P.runModuleName mdl)))
