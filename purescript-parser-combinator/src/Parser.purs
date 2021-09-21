@@ -6,6 +6,8 @@ module Parser.Parsec
   -- )
 where
 
+import Control.Applicative (class Applicative)
+import Control.Apply (class Apply)
 import Control.Semigroupoid ((<<<))
 import Data.Either (Either(..))
 import Data.Function (($))
@@ -59,19 +61,19 @@ runParser ::
 runParser s (Parser p) = p s 0 mempty (\a _ _ -> Right a) (\(Err i e) -> Left (i /\ e))
 
 instance functorParser :: Functor (Parser e) where
-  map f (Parser p) = Parser \s i e ok err -> p s i e (ok <<< f) err -- p s i ?asef ?asefa -- e (ok <<< f)
+  map f (Parser p) = Parser \s i e ok err -> p s i e (ok <<< f) err
 
--- instance Applicative (Parser t e) where
---   {-# INLINE pure #-}
---   pure a = Parser $ \_ i e ok _ -> ok a i e
---   {-# INLINE (<*>) #-}
---   Parser pf <*> Parser pa = Parser $ \t i e ok ng -> pf t i e (\f i' e' -> pa t i' e' (ok . f) ng) ng
+instance applyParser :: Apply (Parser e) where
+  apply (Parser pf) (Parser pa) = Parser \t i e ok ng -> pf t i e (\f i' e' -> pa t i' e' (ok <<< f) ng) ng
 
--- instance Monad (Parser t e) where
+instance applicativeParser :: Applicative (Parser e) where
+  pure a = Parser \_ i e ok _ -> ok a i e
+
+-- instance Monad (Parser e) where
 --   {-# INLINE (>>=) #-}
 --   Parser k >>= f = Parser $ \t i e ok ng -> k t i e (\a i' e' -> unParser (f a) t i' e' ok ng) ng
 
--- instance Monoid e => Alternative (Parser t e) where
+-- instance Monoid e => Alternative (Parser e) where
 --   {-# INLINE empty #-}
 --   empty = Parser $ \_ _ e _ ng -> ng e
 --   {-# INLINE (<|>) #-}
@@ -79,7 +81,7 @@ instance functorParser :: Functor (Parser e) where
 --     pl t i e ok $ \e' ->
 --       pr t i e' ok ng
 
--- instance Monoid e => MonadPlus (Parser t e)
+-- instance Monoid e => MonadPlus (Parser e)
 
 -- {-# INLINE token #-}
 -- token :: Parser t e t
