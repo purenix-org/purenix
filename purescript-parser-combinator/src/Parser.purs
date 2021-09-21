@@ -22,6 +22,19 @@ instance semigroupErr :: Semigroup e => Semigroup (Err e) where
 instance monoidErr :: Monoid e => Monoid (Err e) where
   mempty = Err 0 mempty
 
+-- | A simple backtracking parser.
+-- Maintains the error message of whatever branch managed to consume the most input.
+newtype Parser e a = Parser
+  { unParser ::
+      forall b.
+      String ->
+      Int -> -- Offset
+      Err e -> -- error set
+      (a -> Int -> Err e -> b) -> -- Success continuation
+      (Err e -> b) -> -- Error continuation
+      b
+  }
+
 -- {-# INLINE runParser #-}
 -- runParser ::
 --   Monoid e =>
@@ -30,19 +43,6 @@ instance monoidErr :: Monoid e => Monoid (Err e) where
 --   Parser t e a ->
 --   Either (Int, e) a
 -- runParser t (Parser p) = p t 0 mempty (\a _ _ -> Right a) (\(Err i e) -> Left (i, e))
-
--- -- | A simple backtracking parser.
--- -- Maintains the error message of whatever branch managed to consume the most input.
--- newtype Parser t e a = Parser
---   { unParser ::
---       forall b.
---       (Int -> t) -> -- Read token
---       Int -> -- Offset
---       Err e -> -- error set
---       (a -> Int -> Err e -> b) -> -- Success continuation
---       (Err e -> b) -> -- Error continuation
---       b
---   }
 
 -- instance Functor (Parser t e) where
 --   {-# INLINE fmap #-}
