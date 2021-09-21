@@ -1,3 +1,3 @@
 module Main where
 
----- type Parser a = ExceptT ParseError (State String) a
+-- type Parser a = ReaderT String (ExceptT ParseError (State (Maybe Int))) a
