@@ -6,10 +6,13 @@ module Parser.Parsec
   -- )
 where
 
+import Control.Alt (class Alt)
+import Control.Alternative (class Alternative)
 import Control.Applicative (class Applicative)
 import Control.Apply (class Apply)
 import Control.Bind (class Bind)
 import Control.Monad (class Monad)
+import Control.Plus (class Plus)
 import Control.Semigroupoid ((<<<))
 import Data.Either (Either(..))
 import Data.Function (($))
@@ -76,15 +79,15 @@ instance bindParser :: Bind (Parser e) where
 
 instance monadParser :: Monad (Parser e)
 
--- instance Monoid e => Alternative (Parser e) where
---   {-# INLINE empty #-}
---   empty = Parser $ \_ _ e _ ng -> ng e
---   {-# INLINE (<|>) #-}
---   Parser pl <|> Parser pr = Parser $ \t i e ok ng ->
---     pl t i e ok $ \e' ->
---       pr t i e' ok ng
+instance altParser :: Alt (Parser e) where
+  alt (Parser pl) (Parser pr) = Parser \t i e ok ng ->
+    pl t i e ok $ \e' ->
+      pr t i e' ok ng
 
--- instance Monoid e => MonadPlus (Parser e)
+instance plusParser :: Plus (Parser e) where
+  empty = Parser \_ _ e _ ng -> ng e
+
+instance alternativeParser :: Alternative (Parser e)
 
 -- {-# INLINE token #-}
 -- token :: Parser t e t
