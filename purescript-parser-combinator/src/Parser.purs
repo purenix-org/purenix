@@ -6,10 +6,12 @@ module Parser.Parsec
   -- )
 where
 
+import Data.Either (Either(..))
 import Data.Monoid (class Monoid, mempty)
 import Data.Ord (compare)
 import Data.Ordering (Ordering(..))
 import Data.Semigroup (class Semigroup, append)
+import Data.Tuple.Nested ((/\), type (/\))
 
 data Err e = Err Int e
 
@@ -25,24 +27,33 @@ instance monoidErr :: Monoid e => Monoid (Err e) where
 -- | A simple backtracking parser.
 -- Maintains the error message of whatever branch managed to consume the most input.
 newtype Parser e a = Parser
-  { unParser ::
-      forall b.
-      String ->
-      Int -> -- Offset
-      Err e -> -- error set
-      (a -> Int -> Err e -> b) -> -- Success continuation
-      (Err e -> b) -> -- Error continuation
-      b
-  }
+  ( forall b.
+    String ->
+    Int -> -- Offset
+    Err e -> -- error set
+    (a -> Int -> Err e -> b) -> -- Success continuation
+    (Err e -> b) -> -- Error continuation
+    b
+  )
 
--- {-# INLINE runParser #-}
--- runParser ::
---   Monoid e =>
---   -- | Function to read a single token. Nothing means EOF/OOB.
---   (Int -> t) ->
---   Parser t e a ->
---   Either (Int, e) a
--- runParser t (Parser p) = p t 0 mempty (\a _ _ -> Right a) (\(Err i e) -> Left (i, e))
+unParser
+  :: forall b e a
+   . Parser e a -> 
+     String ->
+     Int -> -- Offset
+     Err e -> -- error set
+     (a -> Int -> Err e -> b) -> -- Success continuation
+     (Err e -> b) -> -- Error continuation
+     b
+unParser (Parser p) = p
+
+runParser ::
+  forall e a.
+  Monoid e =>
+  String ->
+  Parser e a ->
+  Either (Int /\ e) a
+runParser s (Parser p) = p s 0 mempty (\a _ _ -> Right a) (\(Err i e) -> Left (i /\ e))
 
 -- instance Functor (Parser t e) where
 --   {-# INLINE fmap #-}
