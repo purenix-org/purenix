@@ -8,6 +8,8 @@ where
 
 import Control.Applicative (class Applicative)
 import Control.Apply (class Apply)
+import Control.Bind (class Bind)
+import Control.Monad (class Monad)
 import Control.Semigroupoid ((<<<))
 import Data.Either (Either(..))
 import Data.Function (($))
@@ -69,9 +71,10 @@ instance applyParser :: Apply (Parser e) where
 instance applicativeParser :: Applicative (Parser e) where
   pure a = Parser \_ i e ok _ -> ok a i e
 
--- instance Monad (Parser e) where
---   {-# INLINE (>>=) #-}
---   Parser k >>= f = Parser $ \t i e ok ng -> k t i e (\a i' e' -> unParser (f a) t i' e' ok ng) ng
+instance bindParser :: Bind (Parser e) where
+  bind (Parser k) f = Parser \t i e ok ng -> k t i e (\a i' e' -> unParser (f a) t i' e' ok ng) ng
+
+instance monadParser :: Monad (Parser e)
 
 -- instance Monoid e => Alternative (Parser e) where
 --   {-# INLINE empty #-}
