@@ -6,7 +6,10 @@ module Parser.Parsec
   -- )
 where
 
+import Control.Semigroupoid ((<<<))
 import Data.Either (Either(..))
+import Data.Function (($))
+import Data.Functor (class Functor)
 import Data.Monoid (class Monoid, mempty)
 import Data.Ord (compare)
 import Data.Ordering (Ordering(..))
@@ -55,9 +58,8 @@ runParser ::
   Either (Int /\ e) a
 runParser s (Parser p) = p s 0 mempty (\a _ _ -> Right a) (\(Err i e) -> Left (i /\ e))
 
--- instance Functor (Parser t e) where
---   {-# INLINE fmap #-}
---   fmap f (Parser k) = Parser $ \t i e ok -> k t i e (ok . f)
+instance functorParser :: Functor (Parser e) where
+  map f (Parser p) = Parser \s i e ok err -> p s i e (ok <<< f) err -- p s i ?asef ?asefa -- e (ok <<< f)
 
 -- instance Applicative (Parser t e) where
 --   {-# INLINE pure #-}
