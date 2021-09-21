@@ -39,7 +39,6 @@ library
     Nix.Identifiers
     Nix.Prelude
     Nix.Print
-    Nix.Util
 
   build-depends:
     , aeson
