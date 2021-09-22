@@ -47,21 +47,26 @@ module' ::
   [Ident] ->
   [Bind Ann] ->
   Convert N.Expr
-module' _modName imports exports reexports foreign' decls = do
+module' thisModule imports exports reexports foreign' decls = do
   let ffiFileBinding =
         if not (null foreign')
           then [("foreign", N.app (N.var "import") (N.path "./foreign.nix"))]
           else []
   let importBinding =
-        let toImport (_, mdl) = (N.moduleKey mdl, N.app (N.var "import") (N.path ("../" <> P.runModuleName mdl)))
-         in [("module", N.attrs [] [] (toImport <$> imports))]
+        let attrs =
+              [ (N.moduleKey mdl, N.app (N.var "import") (N.path ("../" <> P.runModuleName mdl)))
+                | (_, mdl) <- imports,
+                  mdl /= thisModule,
+                  mdl /= P.ModuleName "Prim"
+              ]
+         in ("module", N.attrs [] [] attrs)
       ffiBinds = foreignBinding <$> foreign'
       expts = N.mkVar <$> exports
       reexpts = uncurry inheritFrom <$> M.toList reexports
   binds <- bindings decls
   pure $
     N.let'
-      (importBinding <> ffiFileBinding <> ffiBinds <> binds)
+      (importBinding : ffiFileBinding <> ffiBinds <> binds)
       (N.attrs expts reexpts mempty)
   where
     inheritFrom :: P.ModuleName -> [Ident] -> (N.Expr, [N.Key])
