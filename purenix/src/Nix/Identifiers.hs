@@ -81,7 +81,7 @@ newtype Key = UnsafeKey {unKey :: Text}
   deriving newtype (IsString, Eq, Show)
 
 moduleKey :: PS.ModuleName -> Key
-moduleKey (PS.ModuleName mdl) = UnsafeKey mdl
+moduleKey (PS.ModuleName mdl) = UnsafeKey $ "\"" <> mdl <> "\""
 
 identKey :: PS.Ident -> Key
 identKey = UnsafeKey . unVar . mkVar
