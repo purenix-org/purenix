@@ -61,7 +61,7 @@ mkVar = UnsafeVar . removeDollarSigns . tickKeywords . identToText
       | otherwise = w
     removeDollarSigns w =
       T.map (\c -> if c == '$' then '-' else c) $
-        if T.isPrefixOf "$" w then "S" <> w else w
+        if T.isPrefixOf "$" w then T.tail w else w
 
 keywords :: Set Text
 keywords = Set.fromList (purenixIdents <> nixPrimops <> nixKeywords)
