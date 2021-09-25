@@ -94,7 +94,7 @@ expr (Var ann (P.Qualified mqual name)) = localAnn ann $ do
     Just qual
       | qual /= thisModule -> N.sel (N.sel (N.var "module") (N.moduleKey qual)) (N.identKey name)
     _ -> N.var (N.mkVar name)
-expr (Accessor ann sel body) = localAnn ann $ flip N.sel (stringToKey sel) <$> expr body
+expr (Accessor ann sel body) = localAnn ann $ flip N.sel (N.stringKey sel) <$> expr body
 expr (Let ann binds body) = localAnn ann $ liftA2 N.let' (bindings binds) (expr body)
 expr (ObjectUpdate ann a b) = localAnn ann $ liftA2 (N.bin N.Update) (expr a) (attrs b)
 expr (Constructor _ _ (P.ProperName dataName) fields) = pure $ N.constructor dataName (N.mkVar <$> fields)
@@ -171,15 +171,12 @@ unbinder (LiteralBinder ann lit) scrut' = localAnn ann $ litBinder lit scrut'
       where
         n = length as
         elemAt list ix = N.app (N.app (N.builtin "elemAt") list) (N.int ix)
-    litBinder (ObjectLiteral fields) scrut = mconcat <$> traverse (\(field, binder) -> unbinder binder (N.sel scrut (stringToKey field))) fields
+    litBinder (ObjectLiteral fields) scrut = mconcat <$> traverse (\(field, binder) -> unbinder binder (N.sel scrut (N.stringKey field))) fields
 
 attrs :: [(PSString, Expr Ann)] -> Convert N.Expr
 attrs = fmap (N.attrs [] []) . traverse attr
   where
-    attr (string, body) = (stringToKey string,) <$> expr body
-
-stringToKey :: PSString -> N.Key
-stringToKey = N.UnsafeKey . P.prettyPrintObjectKey
+    attr (string, body) = (N.stringKey string,) <$> expr body
 
 string :: PSString -> Convert Text
 string str = case decodeString str of
