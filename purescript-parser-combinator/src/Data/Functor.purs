@@ -5,8 +5,7 @@ module Data.Functor
   , voidRight, (<$)
   , voidLeft, ($>)
   , flap, (<@>)
-  )
-  where
+  ) where
 
 import Data.Function (const, compose)
 import Data.Unit (Unit, unit)
@@ -41,8 +40,13 @@ infixl 1 mapFlipped as <#>
 instance functorFn :: Functor ((->) r) where
   map = compose
 
+instance functorArray :: Functor Array where
+  map = arrayMap
+
 instance functorProxy :: Functor Proxy where
-    map _ _ = Proxy
+  map _ _ = Proxy
+
+foreign import arrayMap :: forall a b. (a -> b) -> Array a -> Array b
 
 -- | The `void` function is used to ignore the type wrapped by a
 -- | [`Functor`](#functor), replacing it with `Unit` and keeping only the type
