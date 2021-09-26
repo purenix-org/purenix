@@ -18,7 +18,7 @@ let
 
   arrOrd = compare: arrA: arrB:
     if arrA == [] then
-      if b == [] then
+      if arrB == [] then
         0
       else
         1
@@ -36,8 +36,8 @@ let
 in
 
 { ordIntImpl = myOrd;
-, ordNumberImpl = myOrd;
-, ordStringImpl = myOrd;
-, ordCharImpl = myOrd;
-, ordArrayImpl = arrOrd;
+  ordNumberImpl = myOrd;
+  ordStringImpl = myOrd;
+  ordCharImpl = myOrd;
+  ordArrayImpl = arrOrd;
 }
