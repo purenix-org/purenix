@@ -15,5 +15,5 @@
 
   cons = a: arr: [ a ] ++ arr;
 
-  join = builtins.concatStringsSep;
+  intercalate = builtins.concatStringsSep;
 }
