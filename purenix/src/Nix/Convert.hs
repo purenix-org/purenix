@@ -87,6 +87,8 @@ bindings = traverse binding . (>>= flatten)
 expr :: Expr Ann -> Convert N.Expr
 expr (Abs ann arg body) = localAnn ann $ fmap (N.lam (N.mkVar arg)) (expr body)
 expr (Literal ann lit) = localAnn ann $ literal lit
+-- Newtype wrappers can always be removed.
+expr (App ann (Var (_, _, _, Just IsNewtype) _) x) = localAnn ann (expr x)
 expr (App ann f x) = localAnn ann $ liftA2 N.app (expr f) (expr x)
 expr (Var ann (P.Qualified mqual name)) = localAnn ann $ do
   (_, thisModule, _) <- ask
@@ -151,6 +153,7 @@ zipBinders exprs binds = mconcat <$> zipWithM unbinder binds exprs
 unbinder :: Binder Ann -> N.Expr -> Convert ([N.Expr], [(N.Var, N.Expr)])
 unbinder (NullBinder _) _ = pure mempty
 unbinder (VarBinder _ name) scrut = pure $ (\name' -> ([], [(name', scrut)])) $ N.mkVar name
+unbinder (ConstructorBinder (_, _, _, Just IsNewtype) _ _ [field]) scrut = unbinder field scrut
 unbinder (ConstructorBinder ann _ (P.Qualified _ (P.ProperName tag)) fields) scrut =
   localAnn ann $
     mappend ([N.bin N.Equals (N.sel scrut "__tag") (N.string tag)], []) . mconcat <$> zipWithM (\binder field -> unbinder binder (N.sel scrut field)) fields (N.numberedKeys "__field")
