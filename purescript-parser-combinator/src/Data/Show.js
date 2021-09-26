@@ -49,3 +49,25 @@ exports.showStringImpl = function (s) {
     }
   ) + "\"";
 };
+
+exports.showArrayImpl = function (f) {
+  return function (xs) {
+    var ss = [];
+    for (var i = 0, l = xs.length; i < l; i++) {
+      ss[i] = f(xs[i]);
+    }
+    return "[" + ss.join(",") + "]";
+  };
+};
+
+exports.cons = function (head) {
+  return function (tail) {
+    return [head].concat(tail);
+  };
+};
+
+exports.join = function (separator) {
+  return function (xs) {
+    return xs.join(separator);
+  };
+};
