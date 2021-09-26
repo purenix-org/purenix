@@ -33,8 +33,8 @@ instance showChar :: Show Char where
 instance showString :: Show String where
   show = showStringImpl
 
--- instance showArray :: Show a => Show (Array a) where
---   show = showArrayImpl show
+instance showArray :: Show a => Show (Array a) where
+  show = showArrayImpl show
 
 instance showProxy :: Show (Proxy a) where
   show _ = "Proxy"
@@ -77,6 +77,6 @@ foreign import showNumberImpl :: Number -> String
 foreign import showCharImpl :: Char -> String
 foreign import showStringImpl :: String -> String
 
--- foreign import showArrayImpl :: forall a. (a -> String) -> Array a -> String
+foreign import showArrayImpl :: forall a. (a -> String) -> Array a -> String
 foreign import cons :: forall a. a -> Array a -> Array a
 foreign import join :: String -> Array String -> String
