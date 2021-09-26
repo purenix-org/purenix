@@ -6,19 +6,18 @@ let
   mod = base: int: base - (int * (builtins.div base int));
 in
 
-{ maxInt = 9223372036854775807;
-, minInt = -9223372036854775807;
+{
+  intDegree = x: abs x;
 
-  # TODO: What is this function?
-, intDegree = x: abs x;
+  intDiv = x: y: if y == 0 then 0 else x / y;
 
-, intMod = x: y:
+  intMod = x: y:
     if y == 0 then
       0
     else
       let
         yy = abs y;
-      in (mod (mod x yy) + yy) yy)
+      in mod ((mod x yy) + yy) yy;
 
-, numDiv = x: y: x / y;
+  numDiv = x: y: x / y;
 }
