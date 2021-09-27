@@ -4,6 +4,7 @@ version:         0
 license:         BSD-3-Clause
 build-type:      Simple
 license-file:    LICENSE
+
 -- category:
 -- description:     description
 -- synopsis:        one-line synopsis
@@ -32,13 +33,24 @@ library
   import:          common-options
   hs-source-dirs:  src
   exposed-modules: Lib
+  other-modules:
+    Nix.Convert
+    Nix.Expr
+    Nix.Identifiers
+    Nix.Prelude
+    Nix.Print
+
   build-depends:
     , aeson
+    , bytestring
     , containers
     , directory
+    , filepath
+    , microlens-platform
     , mtl
-    , purescript  ==0.14.4
     , pretty-simple
+    , purescript          ==0.14.4
+    , purescript-cst
     , text
 
 executable purenix
