@@ -25,9 +25,21 @@ let
              arrOrd compare (builtins.tail arrA) (builtins.tail arrB)
            else
              rel;
+
+  # In PureScript, true > false.  But in Nix, we can't directly compare
+  # booleans, so we need this function.
+  ordBooleanImpl = lt: eq: gt: a: b:
+    if a && !b then
+      gt
+    else
+      if !a && b then
+        lt
+      else
+        eq;
 in
 
-{ ordIntImpl = myOrd;
+{ inherit ordBooleanImpl;
+  ordIntImpl = myOrd;
   ordNumberImpl = myOrd;
   ordStringImpl = myOrd;
   ordCharImpl = myOrd;
