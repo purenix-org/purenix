@@ -5,4 +5,5 @@
 let upstream = {=}
 
 in  upstream
+    with safe-coerce = ./purescript-safe-coerce/spago.dhall as Location
     with unsafe-coerce = ./purescript-unsafe-coerce/spago.dhall as Location
