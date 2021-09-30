@@ -12,7 +12,6 @@ to generate this file without the comments in this block.
 -}
 { name = "unsafe-coerce"
 
--- , dependencies = [ "console", "effect", "prelude", "psci-support" ]
 , dependencies = [] : List Text
 
 , backend = "purenix"

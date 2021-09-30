@@ -12,7 +12,6 @@ to generate this file without the comments in this block.
 -}
 { name = "prelude"
 
--- , dependencies = [ "console", "effect", "prelude", "psci-support" ]
 , dependencies =
     [ "unsafe-coerce"
     ]
