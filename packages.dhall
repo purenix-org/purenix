@@ -5,5 +5,6 @@
 let upstream = {=}
 
 in  upstream
+    with prelude = ./purescript-prelude/spago.dhall as Location
     with safe-coerce = ./purescript-safe-coerce/spago.dhall as Location
     with unsafe-coerce = ./purescript-unsafe-coerce/spago.dhall as Location
