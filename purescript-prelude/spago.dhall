@@ -15,7 +15,7 @@ to generate this file without the comments in this block.
 -- , dependencies = [ "console", "effect", "prelude", "psci-support" ]
 , dependencies = [] : List Text
 
-, backend = "cd ../purenix && cabal run purenix"
+, backend = "purenix"
 
 -- , packages = ./packages.dhall
 , packages = {=}
