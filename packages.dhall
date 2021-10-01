@@ -5,6 +5,7 @@
 let upstream = {=}
 
 in  upstream
+    with newtype = ./purescript-newtype/spago.dhall as Location
     with prelude = ./purescript-prelude/spago.dhall as Location
     with safe-coerce = ./purescript-safe-coerce/spago.dhall as Location
     with unsafe-coerce = ./purescript-unsafe-coerce/spago.dhall as Location
