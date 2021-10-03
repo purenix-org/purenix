@@ -73,17 +73,14 @@ jobs:
 
       - name: Build dependencies
         run: |
-          cd purenix
           stack build --resolver ${{ matrix.resolver }} --only-dependencies
 
       - name: Build purenix
         run: |
-          cd purenix
           stack build --resolver ${{ matrix.resolver }}
 
       - name: Run tests
         run: |
-          cd purenix
           stack build --resolver ${{ matrix.resolver }} --haddock --test --bench --no-run-benchmarks
 
   cabal-build:
@@ -122,15 +119,12 @@ jobs:
 
       - name: Build dependencies
         run: |
-          cd purenix
           cabal new-build --only-dependencies
 
       - name: Build purenix
         run: |
-          cd purenix
           cabal new-build
 
       - name: Run tests
         run: |
-          cd purenix
           cabal new-test --test-show-details=direct
