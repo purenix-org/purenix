@@ -1,3 +1,7 @@
+### Nix ###
+result
+
+### Haskell ###
 dist
 dist-*
 cabal-dev
@@ -21,9 +25,3 @@ cabal.project.local
 cabal.project.local~
 .HTF/
 .ghc.environment.*
-
-# nix result files
-/result*
-
-# .nix files generated from purenix
-/generated/
