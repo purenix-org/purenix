@@ -1,2 +1,0 @@
-
-{ intercalate = builtins.concatStringsSep; }

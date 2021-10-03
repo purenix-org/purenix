@@ -1,2 +1,0 @@
-
-{ unsafeCoerce = x: x; }
