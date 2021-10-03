@@ -1,0 +1,2 @@
+
+{ arrayMap = map; }
