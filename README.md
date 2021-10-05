@@ -1,5 +1,40 @@
 # purenix
-[![purenix on hackage](https://img.shields.io/hackage/v/purenix)](http://hackage.haskell.org/package/purenix)
-[![purenix on Stackage Nightly](https://stackage.org/package/purenix/badge/nightly)](https://stackage.org/nightly/package/purenix)
 
-Generated with [template-haskell](https://github.com/jonascarpay/template-haskell)
+Purenix is a Nix backend for Purescript.
+
+Sometimes, you find yourself having to write Nix code that's more complicated than what the language was designed for.
+Purenix allows you to write that code in a fully-featured, strongly-typed language instead, and then compile to Nix.
+A typical example of this is non-trivial parsing of configuration files, such as [cabal2nix written entirely in Nix](https://github.com/cdepillabout/cabal2nixWithoutIFD), which inspired `purenix`.
+
+It has full support for all of Purescript's features, including calling back into Nix using the Purescript FFI.
+
+On the [organization page for `purenix`](https://github.com/purenix-org) you will find a number of packages intended to be used with `purenix`, including Nix ports of several popular Purescript libraries like the Prelude.
+
+### Code samples
+
+TODO
+
+## Usage
+
+### Compiling with purenix
+
+The easiest way to use `purenix` is through Spago.
+Simply set the backend to `purenix`, make sure it's available in the `PATH`, and build as normal.
+
+When you run `purenix`, manually or through Spago, it will look for the Purescript output directory `./output` in the current working directory.
+It then traverses this directory structure, look for Purescript's intermediate `corefn.json` files, and produce the equivalent Nix code and write it to `default.nix`.
+
+### Laziness
+
+Purescript is a strict language, or more specifically, assumes that its backends perform strict evaluation.
+Nix is a lazy language however, and we make no attempt to reconcile this in any way.
+You might expect this to cause issues, but in general, Purescript makes for a fine lazy language.
+In fact, because of laziness you can use more of Haskell's idioms than you typically would in Purescript.
+
+There are two things to watch out for:
+
+The first thing to watch out for is space leaks, in the same way you would in Haskell (slightly more so because there is no strictness analysis phase).
+Nix has a `builtins.seq` that you can use to force evaluation of thunks, but you have to go through the FFI to call it, since Purescript has no native support for it.
+
+The second thing is that Haskell often relies on tail call optimization to make long-running lazy programs use constant memory, which Nix does not support.
+This shouldn't be an issue since you probably don't want to use Nix for long-running programs in the first place, but it's a good thing to be aware of.
