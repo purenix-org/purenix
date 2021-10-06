@@ -10,9 +10,58 @@ It has full support for all of Purescript's features, including calling back int
 
 On the [organization page for `purenix`](https://github.com/purenix-org) you will find a number of packages intended to be used with `purenix`, including Nix ports of several popular Purescript libraries like the Prelude.
 
-### Code samples
+### Code sample
 
-TODO
+Purescript source:
+
+```purescript
+module Main where
+
+import Data.A as A
+import Data.B as B
+
+greeting :: String
+greeting = "Hello, world!"
+
+data Maybe a = Nothing | Just a
+
+fromMaybe :: forall a. a -> Maybe a -> a
+fromMaybe a Nothing = a
+fromMaybe _ (Just a) = a
+
+foreign import add :: Int -> Int -> Int
+
+foo :: Int
+foo = add A.bar B.baz
+```
+
+Generated Nix:
+
+```nix
+let
+  module = 
+    { "Data.A" = import ../Data.A;
+      "Data.B" = import ../Data.B;
+    };
+  foreign = import ./foreign.nix;
+  add = foreign.add;
+  Nothing = {__tag = "Nothing";};
+  Just = value0: 
+    { __tag = "Just";
+      __field0 = value0;
+    };
+  greeting = "Hello, world!";
+  fromMaybe = v: v1: 
+    let
+      __pattern0 = __fail: if v1.__tag == "Nothing" then let a = v; in a else __fail;
+      __pattern1 = __fail: if v1.__tag == "Just" then let a = v1.__field0; in a else __fail;
+      __patternFail = builtins.throw "Pattern match failure in src/Main.purs at 11:1 - 11:41";
+    in
+      __pattern0 (__pattern1 __patternFail);
+  foo = add module."Data.A".bar module."Data.B".baz;
+in
+  {inherit greeting Nothing Just fromMaybe add foo;}
+```
 
 ## Usage
 
