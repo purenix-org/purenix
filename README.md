@@ -1,16 +1,19 @@
-# purenix
+<p align="center">
+  <img src="img/purenix-icon.svg" width="150" height="150" />
+</ p>
+<h1 align="center">purenix</h1>
 
-Purenix is a Nix backend for Purescript.
+Purenix is a Nix backend for Purescript
 
 Sometimes, you find yourself having to write Nix code that's more complicated than what the language was designed for.
 Purenix allows you to write that code in a fully-featured, strongly-typed language instead, and then compile to Nix.
-A typical example of this is non-trivial parsing of configuration files, such as [cabal2nix written entirely in Nix](https://github.com/cdepillabout/cabal2nixWithoutIFD), which inspired `purenix`.
+A typical example is handling of configuration files, like [the port of cabal2nix that inspired Purenix](https://github.com/cdepillabout/cabal2nixWithoutIFD).
 
-It has full support for all of Purescript's features, including calling back into Nix using the Purescript FFI.
+Purenix has full support for all of Purescript's features, including data types, type classes, and calling back into Nix using the FFI.
 
 On the [organization page for `purenix`](https://github.com/purenix-org) you will find a number of packages intended to be used with `purenix`, including Nix ports of several popular Purescript libraries like the Prelude.
 
-### Code sample
+#### Code sample
 
 Purescript source:
 
