@@ -15,6 +15,7 @@ import qualified System.Directory as Dir
 import qualified System.Exit as Sys
 import System.FilePath ((</>))
 import qualified System.FilePath as FP
+import System.IO
 
 defaultMain :: IO ()
 defaultMain = do
@@ -39,6 +40,6 @@ defaultMain = do
     hasForeign <- Dir.doesFileExist foreignSrc
     case (hasForeign, usesFFI) of
       (True, True) -> Dir.copyFile foreignSrc foreignTrg
-      (True, False) -> putStrLn $ "Warning: " <> modulePath <> " has an FFI file, but does not use FFI!"
-      (False, True) -> putStrLn $ "Warning: " <> modulePath <> " calls foreign functions, but has no associated FFI file!"
+      (True, False) -> hPutStrLn stderr $ "Warning: " <> modulePath <> " has an FFI file, but does not use FFI!"
+      (False, True) -> hPutStrLn stderr $ "Warning: " <> modulePath <> " calls foreign functions, but has no associated FFI file!"
       (False, False) -> pure ()
