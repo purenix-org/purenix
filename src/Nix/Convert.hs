@@ -7,7 +7,10 @@ module Nix.Convert (convert, ModuleInfo (..)) where
 
 import Data.Bitraversable
 import qualified Data.Map as M
+import Data.Set (Set)
+import qualified Data.Set as S
 import qualified Data.Text as T
+import Data.Text.Internal.Search (indices)
 import Language.PureScript (Ident (..))
 import qualified Language.PureScript as P
 import Language.PureScript.CoreFn
@@ -23,12 +26,15 @@ type Convert =
     (FilePath, P.ModuleName, SourceSpan)
     (StateT ModuleInfo (Either Text))
 
-newtype ModuleInfo = ModuleInfo {usesFFI :: Bool}
+data ModuleInfo = ModuleInfo
+  { usesFFI :: Bool,
+    interpolatedStrings :: Set SourceSpan
+  }
   deriving (Eq, Show)
 
-instance Semigroup ModuleInfo where ModuleInfo fa <> ModuleInfo fb = ModuleInfo (fa || fb)
+instance Semigroup ModuleInfo where ModuleInfo fa ia <> ModuleInfo fb ib = ModuleInfo (fa || fb) (ia <> ib)
 
-instance Monoid ModuleInfo where mempty = ModuleInfo False
+instance Monoid ModuleInfo where mempty = ModuleInfo False mempty
 
 tell :: ModuleInfo -> Convert ()
 tell m = modify (mappend m)
@@ -78,7 +84,7 @@ module' thisModule imports exports reexports foreign' decls = do
   ffiFileBinding <-
     if null foreign'
       then pure []
-      else [("foreign", N.app (N.var "import") (N.path "./foreign.nix"))] <$ tell (ModuleInfo True)
+      else [("foreign", N.app (N.var "import") (N.path "./foreign.nix"))] <$ tell mempty {usesFFI = True}
   binds <- bindings decls
   pure $
     N.let'
@@ -200,7 +206,16 @@ attrs = fmap (N.attrs [] []) . traverse attr
 string :: PSString -> Convert Text
 string str = case decodeString str of
   Nothing -> throw "String contained lone surrogates"
-  Just x -> pure x
+  Just x -> do
+    when (mightContainInterpolation x) $ do
+      (_, _, spn) <- ask
+      tell mempty {interpolatedStrings = S.singleton spn}
+    pure x
+  where
+    mightContainInterpolation :: Text -> Bool
+    mightContainInterpolation t = case indices "${" t of
+      [] -> False
+      (ixOpen : _) -> any (> ixOpen) $ indices "}" t
 
 literal :: Literal (Expr Ann) -> Convert N.Expr
 literal (NumericLiteral (Left n)) = pure $ N.int n
