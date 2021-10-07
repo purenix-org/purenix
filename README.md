@@ -1,17 +1,17 @@
 <p align="center">
   <img src="img/purenix-icon.svg" width="150" height="150" />
 </ p>
-<h1 align="center">purenix</h1>
+<h1 align="center">PureNix</h1>
 
-Purenix is a Nix backend for PureScript
+PureNix is a Nix backend for PureScript
 
 Sometimes, you find yourself having to write Nix code that's more complicated than what the language was designed for.
-Purenix allows you to write that code in a fully-featured, strongly-typed language instead, and then compile to Nix.
-A typical example is parsing of configuration files, like [the port of cabal2nix that inspired Purenix](https://github.com/cdepillabout/cabal2nixWithoutIFD).
+PureNix allows you to write that code in a fully-featured, strongly-typed language instead, and then compile to Nix.
+A typical example is parsing of configuration files, like [the port of cabal2nix that inspired PureNix](https://github.com/cdepillabout/cabal2nixWithoutIFD).
 
-Purenix has full support for all of PureScript's features, including data types, type classes, and calling back into Nix using the FFI.
+PureNix has full support for all of PureScript's features, including data types, type classes, and calling back into Nix using the FFI.
 
-On the [organization page for Purenix](https://github.com/purenix-org) you will find a number of packages intended to be used with Purenix, including ports of libraries like [purescript-prelude](https://github.com/purenix-org/purescript-prelude).
+On the [organization page for PureNix](https://github.com/purenix-org) you will find a number of packages intended to be used with PureNix, including ports of libraries like [purescript-prelude](https://github.com/purenix-org/purescript-prelude).
 
 #### Code sample
 
@@ -80,9 +80,9 @@ There are a couple things to notice here:
 
 ## Usage
 
-### Compiling with Purenix
+### Compiling with PureNix
 
-The easiest way to use Purenix is through Spago.
+The easiest way to use PureNix is through Spago.
 Simply set `backend = "purenix"`, make sure `purenix` is available in the `PATH`, and build as normal.
 
 When you run `purenix`, manually or through Spago, it will look for the Purescript output directory `./output` in the current working directory.
