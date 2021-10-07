@@ -13,7 +13,7 @@ PureNix has full support for all of PureScript's features, including data types,
 
 On the [organization page for PureNix](https://github.com/purenix-org) you will find a number of packages intended to be used with PureNix, including ports of libraries like [purescript-prelude](https://github.com/purenix-org/purescript-prelude).
 
-#### Code sample
+## Code sample
 
 PureScript source, `Main.purs`:
 
