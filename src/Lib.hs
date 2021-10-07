@@ -8,7 +8,7 @@ import qualified Data.Text as T
 import qualified Data.Text.Lazy.IO as TL
 import qualified Language.PureScript.CoreFn as P
 import Language.PureScript.CoreFn.FromJSON (moduleFromJSON)
-import Nix.Convert (convert)
+import Nix.Convert (ModuleInfo (ModuleInfo), convert)
 import Nix.Prelude
 import Nix.Print (renderExpr)
 import qualified System.Directory as Dir
@@ -30,10 +30,15 @@ defaultMain = do
     putStrLn $ "Converting " <> file <> "..."
     value <- Aeson.eitherDecodeFileStrict file >>= either Sys.die pure
     (_version, module') <- either Sys.die pure $ parseEither moduleFromJSON value
-    nix <- either (Sys.die . T.unpack) pure $ convert module'
+    (nix, ModuleInfo usesFFI) <- either (Sys.die . T.unpack) pure $ convert module'
     TL.writeFile (dir </> "default.nix") (renderExpr nix)
     -- Copy FFI file, if one exists
-    let foreignSrc = workdir </> FP.replaceExtension (P.modulePath module') "nix"
+    let modulePath = P.modulePath module'
+        foreignSrc = workdir </> FP.replaceExtension modulePath "nix"
         foreignTrg = dir </> "foreign.nix"
     hasForeign <- Dir.doesFileExist foreignSrc
-    when hasForeign $ Dir.copyFile foreignSrc foreignTrg
+    case (hasForeign, usesFFI) of
+      (True, True) -> Dir.copyFile foreignSrc foreignTrg
+      (True, False) -> putStrLn $ "Warning: " <> modulePath <> " has an FFI file, but does not use FFI!"
+      (False, True) -> putStrLn $ "Warning: " <> modulePath <> " calls foreign functions, but has no associated FFI file!"
+      (False, False) -> pure ()

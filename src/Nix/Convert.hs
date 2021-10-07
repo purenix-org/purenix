@@ -3,7 +3,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 
-module Nix.Convert (convert) where
+module Nix.Convert (convert, ModuleInfo (..)) where
 
 import Data.Bitraversable
 import qualified Data.Map as M
@@ -17,11 +17,27 @@ import qualified Nix.Expr as N
 import qualified Nix.Identifiers as N
 import Nix.Prelude
 
-type Convert = ReaderT (FilePath, P.ModuleName, SourceSpan) (Either Text)
+-- The StateT here serves the role of a CPS'd WriterT
+type Convert =
+  ReaderT
+    (FilePath, P.ModuleName, SourceSpan)
+    (StateT ModuleInfo (Either Text))
 
-convert :: Module Ann -> Either Text N.Expr
+newtype ModuleInfo = ModuleInfo {usesFFI :: Bool}
+  deriving (Eq, Show)
+
+instance Semigroup ModuleInfo where ModuleInfo fa <> ModuleInfo fb = ModuleInfo (fa || fb)
+
+instance Monoid ModuleInfo where mempty = ModuleInfo False
+
+tell :: ModuleInfo -> Convert ()
+tell m = modify (mappend m)
+
+convert :: Module Ann -> Either Text (N.Expr, ModuleInfo)
 convert (Module spn _comments name path imports exports reexports foreign' decls) =
-  runReaderT (module' name imports exports reexports foreign' decls) (path, name, spn)
+  flip runStateT mempty $
+    flip runReaderT (path, name, spn) $
+      module' name imports exports reexports foreign' decls
 
 throw :: Text -> Convert a
 throw err = ask >>= throwError . format
@@ -48,10 +64,6 @@ module' ::
   [Bind Ann] ->
   Convert N.Expr
 module' thisModule imports exports reexports foreign' decls = do
-  let ffiFileBinding =
-        if not (null foreign')
-          then [("foreign", N.app (N.var "import") (N.path "./foreign.nix"))]
-          else []
   let importBinding =
         let attrs =
               [ (N.moduleKey mdl, N.app (N.var "import") (N.path ("../" <> P.runModuleName mdl)))
@@ -63,6 +75,10 @@ module' thisModule imports exports reexports foreign' decls = do
       ffiBinds = foreignBinding <$> foreign'
       expts = N.mkVar <$> exports
       reexpts = uncurry inheritFrom <$> M.toList reexports
+  ffiFileBinding <-
+    if null foreign'
+      then pure []
+      else [("foreign", N.app (N.var "import") (N.path "./foreign.nix"))] <$ tell (ModuleInfo True)
   binds <- bindings decls
   pure $
     N.let'
