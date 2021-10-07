@@ -3,7 +3,7 @@
 </ p>
 <h1 align="center">PureNix</h1>
 
-PureNix is a Nix backend for PureScript
+PureNix is a Nix backend for PureScript.
 
 Sometimes, you find yourself having to write Nix code that's more complicated than what the language was designed for.
 PureNix allows you to write that code in a fully-featured, strongly-typed language instead, and then compile to Nix.
