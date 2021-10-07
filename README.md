@@ -3,19 +3,19 @@
 </ p>
 <h1 align="center">purenix</h1>
 
-Purenix is a Nix backend for Purescript
+Purenix is a Nix backend for PureScript
 
 Sometimes, you find yourself having to write Nix code that's more complicated than what the language was designed for.
 Purenix allows you to write that code in a fully-featured, strongly-typed language instead, and then compile to Nix.
-A typical example is handling of configuration files, like [the port of cabal2nix that inspired Purenix](https://github.com/cdepillabout/cabal2nixWithoutIFD).
+A typical example is parsing of configuration files, like [the port of cabal2nix that inspired Purenix](https://github.com/cdepillabout/cabal2nixWithoutIFD).
 
-Purenix has full support for all of Purescript's features, including data types, type classes, and calling back into Nix using the FFI.
+Purenix has full support for all of PureScript's features, including data types, type classes, and calling back into Nix using the FFI.
 
-On the [organization page for Purenix](https://github.com/purenix-org) you will find a number of packages intended to be used with Purenix, including ports of libraries like the Prelude.
+On the [organization page for Purenix](https://github.com/purenix-org) you will find a number of packages intended to be used with Purenix, including ports of libraries like [purescript-prelude](https://github.com/purenix-org/purescript-prelude).
 
 #### Code sample
 
-Purescript source:
+PureScript source, `Main.purs`:
 
 ```purescript
 module Main where
@@ -37,6 +37,12 @@ foreign import add :: Int -> Int -> Int
 foo :: Int
 foo = add A.bar B.baz
 ```
+
+Nix FFI file, `Main.nix`:
+
+```nix
+{ add = a: b: a + b; }
+\```
 
 Generated Nix:
 
@@ -66,21 +72,27 @@ in
   {inherit greeting Nothing Just fromMaybe add foo;}
 ```
 
+There are a couple things to notice here:
+
+- PureScript built-in types like `String` and `Int` are converted to their corresponding Nix types, as in `greeting`.
+- Data constructors from sum types are available to easily work with in the output Nix file, like `Just` and `Nothing`.
+- Foreign imports are easy to both define and use, like in `add` and `foo`.
+
 ## Usage
 
 ### Compiling with Purenix
 
 The easiest way to use Purenix is through Spago.
-Simply set `backend = "purenix"`, make sure `purenix` available in the `PATH`, and build as normal.
+Simply set `backend = "purenix"`, make sure `purenix` is available in the `PATH`, and build as normal.
 
 When you run `purenix`, manually or through Spago, it will look for the Purescript output directory `./output` in the current working directory.
-It then traverses this directory structure, look for Purescript's intermediate `corefn.json` files, and produce the equivalent Nix code and write it to `default.nix`.
+It then traverses this directory structure, looks for Purescript's intermediate `corefn.json` files, transpiles the `corefn.json` files to the equivalent Nix code, and writes the output Nix code to `default.nix`.
 
 ### Laziness
 
-Purescript is a strict language, or more specifically, assumes that its backends perform strict evaluation.
+PureScript is a strict language, or more specifically, assumes that its backends perform strict evaluation.
 Nix is a lazy language however, and we make no attempt to reconcile this in any way.
-This normally doesn't cause any issues, and in fact allows you to write more Haskell-like code than you usually would in Purescript.
+This normally doesn't cause any issues, and in fact allows you to write more Haskell-like code than you usually would in PureScript.
 
 There are two things to watch out for, though:
 
