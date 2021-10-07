@@ -11,7 +11,7 @@ license-file:    LICENSE
 author:          Dennis Gosnell, Jonas Carpay
 maintainer:      Dennis Gosnell <cdep.illabout@gmail.com>
 copyright:       2021 Dennis Gosnell, Jonas Carpay
-homepage:        https://github.com/cdepillabout/cabal2nixWithoutIFD
+homepage:        https://github.com/purenix-org/purenix
 tested-with:     GHC ==8.10.4
 extra-doc-files:
   CHANGELOG.md
@@ -19,7 +19,7 @@ extra-doc-files:
 
 source-repository head
   type:     git
-  location: git://github.com/cdepillabout/cabal2nixWithoutIFD.git
+  location: git://github.com/purenix-org/purenix
 
 common common-options
   build-depends:    base >=4.9 && <5
