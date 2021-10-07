@@ -42,7 +42,7 @@ Nix FFI file, `Main.nix`:
 
 ```nix
 { add = a: b: a + b; }
-\```
+```
 
 Generated Nix:
 
@@ -76,7 +76,7 @@ There are a couple things to notice here:
 
 - PureScript built-in types like `String` and `Int` are converted to their corresponding Nix types, as in `greeting`.
 - Data constructors from sum types are available to easily work with in the output Nix file, like `Just` and `Nothing`.
-- Foreign imports are easy to both define and use, like in `add` and `foo`.
+- Foreign imports are straightforward to define and use, like in `add` and `foo`. The FFI file gets copied into the module's output directory as `foreign.nix`.
 
 ## Usage
 
