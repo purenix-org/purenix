@@ -4,6 +4,8 @@ module Lib where
 
 import qualified Data.Aeson as Aeson
 import Data.Aeson.Types (parseEither)
+import Data.Foldable (toList)
+import Data.List (intercalate)
 import qualified Data.Text as T
 import qualified Data.Text.Lazy.IO as TL
 import qualified Language.PureScript.CoreFn as P
@@ -31,7 +33,7 @@ defaultMain = do
     putStrLn $ "Converting " <> file <> "..."
     value <- Aeson.eitherDecodeFileStrict file >>= either Sys.die pure
     (_version, module') <- either Sys.die pure $ parseEither moduleFromJSON value
-    (nix, ModuleInfo usesFFI) <- either (Sys.die . T.unpack) pure $ convert module'
+    (nix, ModuleInfo usesFFI interpolations) <- either (Sys.die . T.unpack) pure $ convert module'
     TL.writeFile (dir </> "default.nix") (renderExpr nix)
     -- Copy FFI file, if one exists
     let modulePath = P.modulePath module'
@@ -43,3 +45,10 @@ defaultMain = do
       (True, False) -> hPutStrLn stderr $ "Warning: " <> modulePath <> " has an FFI file, but does not use FFI!"
       (False, True) -> hPutStrLn stderr $ "Warning: " <> modulePath <> " calls foreign functions, but has no associated FFI file!"
       (False, False) -> pure ()
+    unless (null interpolations) $ do
+      hPutStrLn stderr $
+        unlines
+          [ "Warning: " <> modulePath <> " appears to perform string interpolation in the following locations:",
+            "  " <> intercalate ", " (show <$> toList interpolations),
+            "String interpolations are currently not officially supported and may cause unexpected behavior."
+          ]
