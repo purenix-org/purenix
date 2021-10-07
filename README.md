@@ -75,7 +75,7 @@ in
 There are a couple things to notice here:
 
 - PureScript built-in types like `String` and `Int` are converted to their corresponding Nix types, as in `greeting`.
-- Data constructors from sum types are available to easily work with in the output Nix file, like `Just` and `Nothing`.
+- Data constructors from sum types are available to easily work with in the output Nix file, like `Just` and `Nothing`, although you might want to define named field accessors.
 - Foreign imports are straightforward to define and use, like in `add` and `foo`. The FFI file gets copied into the module's output directory as `foreign.nix`.
 
 ## Usage
