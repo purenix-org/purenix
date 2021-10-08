@@ -67,6 +67,7 @@ newline = Printer $ do
   i <- asks pcIndent
   emit ("\n" <> mtimesDefault i " ")
 
+-- | Turn a Nix 'Expr' into an actual piece of text.
 renderExpr :: Expr -> LText
 renderExpr = runPrinter . view _1 . foldExpr render
   where
@@ -82,6 +83,7 @@ renderExpr = runPrinter . view _1 . foldExpr render
             (\inner -> delimit (inner ^. _2) '(' ')' (inner ^. _1))
             expr
 
+-- | Expressions can be printed in two styles; single-line or multi-line.
 data Style = Single | Multi deriving (Eq, Ord)
 
 style :: r -> r -> Style -> r
@@ -135,6 +137,7 @@ exprPrec Cond {} = 0
 exprPrec Lam {} = 0
 exprPrec Let {} = 0
 
+-- | Define whether a subexpression needs to be parenthesized, based on its associativity and precedence.
 parenthesize :: forall a b. (a -> Associativity) -> (a -> Precedence) -> (a -> b) -> (a -> b) -> ExprF a -> ExprF b
 parenthesize assoc prec no yes = go
   where

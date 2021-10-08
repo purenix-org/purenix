@@ -4,15 +4,32 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
+-- | Nix expression types and auxiliary functions.
+-- Since 'Expr' is actually a fixpoint over the 'ExprF' base functor, this
+-- module also exposes auxiliary functions that serve as constructors.
 module PureNix.Expr where
 
 import Data.List.NonEmpty (NonEmpty (..))
 import PureNix.Identifiers
 import PureNix.Prelude
 
+-- | The fixpoint over 'ExprF', see haddocks there for more information.
 newtype Expr = Expr {unExpr :: ExprF Expr}
+  -- Explicitly using the @newtype@ strategy here makes the 'Show' instance
+  -- much nicer, since it makes it so you don't get all the @Expr@
+  -- constructors.
   deriving newtype (Show)
 
+-- | Base functor for a Nix expression.
+-- We don't aim to be able to represent every valid Nix expression, just the
+-- ones that are relevant for PureNix.
+--
+-- 'ExprF' is the base functor for the 'Expr' fixpoint.
+-- This allows us to easily annotate and consume it during pretty-printing.
+--
+-- Note that 'String', unlike 'Key' and 'Var', is a raw representation of the intended string, completely unquoted and unescaped.
+-- That means that it might consist of, for example, a single '"'.
+-- It is the job of the printer to figure out how to correctly escape those.
 data ExprF f
   = Var Var
   | Lam Var f
@@ -86,6 +103,8 @@ constructorFieldNames = numberedVars "__field"
 not' :: Expr -> Expr
 not' = Expr . Not
 
+-- | Convenience constructor for builtins.
+-- Takes a Key, and gives you @builtins.key@
 builtin :: Key -> Expr
 builtin = sel (var "builtins")
 
