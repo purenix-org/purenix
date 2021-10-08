@@ -27,7 +27,6 @@ defaultMain = do
   forM_ moduleDirs $ \rel -> do
     let dir = moduleRoot </> rel
     let file = dir </> "corefn.json"
-    putStrLn $ "Converting " <> file <> "..."
     value <- Aeson.eitherDecodeFileStrict file >>= either Sys.die pure
     (_version, module') <- either Sys.die pure $ parseEither moduleFromJSON value
     (nix, ModuleInfo usesFFI interpolations) <- either (Sys.die . T.unpack) pure $ convert module'
