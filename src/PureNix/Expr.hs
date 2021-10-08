@@ -4,11 +4,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Nix.Expr where
+module PureNix.Expr where
 
 import Data.List.NonEmpty (NonEmpty (..))
-import Nix.Identifiers
-import Nix.Prelude
+import PureNix.Identifiers
+import PureNix.Prelude
 
 newtype Expr = Expr {unExpr :: ExprF Expr}
   deriving newtype (Show)

@@ -17,7 +17,7 @@
 -- https://github.com/purescript/purescript/blob/master/lib/purescript-cst/src/Language/PureScript/CST/Lexer.hs#L689
 -- Nix identifiers:
 -- https://github.com/cstrahan/tree-sitter-nix/blob/master/src/grammar.json#L19
-module Nix.Identifiers
+module PureNix.Identifiers
   ( Var (..),
     mkVar,
     numberedVars,
