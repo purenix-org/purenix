@@ -48,7 +48,7 @@ defaultMain = do
     unless (null interpolations) $ do
       hPutStrLn stderr $
         unlines
-          [ "Warning: " <> modulePath <> " appears to perform string interpolation in the following locations:",
+          [ "Warning: " <> modulePath <> " appears to perform Nix string interpolation in the following locations:",
             "  " <> intercalate ", " (show <$> toList interpolations),
-            "String interpolations are currently not officially supported and may cause unexpected behavior."
+            "Nix string interpolations are currently not officially supported and may cause unexpected behavior."
           ]
