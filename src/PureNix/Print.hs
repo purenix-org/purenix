@@ -6,7 +6,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 
-module Nix.Print (renderExpr) where
+module PureNix.Print (renderExpr) where
 
 import Data.Foldable (toList)
 import Data.List (intersperse)
@@ -14,9 +14,9 @@ import Data.Semigroup (mtimesDefault)
 import Data.Text.Lazy.Builder (Builder)
 import qualified Data.Text.Lazy.Builder as TB
 import Lens.Micro.Platform
-import Nix.Expr hiding (string)
-import Nix.Identifiers
-import Nix.Prelude
+import PureNix.Expr hiding (string)
+import PureNix.Identifiers
+import PureNix.Prelude
 
 newtype PrintContext = PrintContext {pcIndent :: Int}
 

@@ -32,13 +32,13 @@ common common-options
 library
   import:          common-options
   hs-source-dirs:  src
-  exposed-modules: Lib
-  other-modules:
-    Nix.Convert
-    Nix.Expr
-    Nix.Identifiers
-    Nix.Prelude
-    Nix.Print
+  exposed-modules:
+    PureNix.Convert
+    PureNix.Expr
+    PureNix.Identifiers
+    PureNix.Main
+    PureNix.Prelude
+    PureNix.Print
 
   build-depends:
     , aeson

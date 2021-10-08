@@ -3,7 +3,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 
-module Nix.Convert (convert, ModuleInfo (..)) where
+module PureNix.Convert (convert, ModuleInfo (..)) where
 
 import Data.Bitraversable
 import qualified Data.Map as M
@@ -16,9 +16,9 @@ import qualified Language.PureScript as P
 import Language.PureScript.CoreFn
 import Language.PureScript.Errors (SourceSpan)
 import Language.PureScript.PSString (PSString, decodeString)
-import qualified Nix.Expr as N
-import qualified Nix.Identifiers as N
-import Nix.Prelude
+import qualified PureNix.Expr as N
+import qualified PureNix.Identifiers as N
+import PureNix.Prelude
 
 -- The StateT here serves the role of a CPS'd WriterT
 type Convert =
