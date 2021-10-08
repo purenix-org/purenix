@@ -20,14 +20,18 @@ import qualified PureNix.Expr as N
 import qualified PureNix.Identifiers as N
 import PureNix.Prelude
 
--- The StateT here serves the role of a CPS'd WriterT
-type Convert =
-  ReaderT
-    (FilePath, P.ModuleName, SourceSpan)
-    (State ModuleInfo)
+-- | The monad conversion runs in.
+-- Conversion is per-module, which means that only the SourceSpan part of the ReaderT ever changes during conversion.
+-- The StateT actually fuffills the role of a CPS'd WriterT.
+type Convert = ReaderT (FilePath, P.ModuleName, SourceSpan) (State ModuleInfo)
 
+-- | Represents the information collected about a module during conversion.
+-- It is intended to be used in a WriterT-style fashion, which is why it has a 'Monoid' instance.
 data ModuleInfo = ModuleInfo
-  { usesFFI :: Bool,
+  { -- | Whether the module has any FFI declarations.
+    -- In the 'Monoid' instance, this behaves like an 'Data.Monoid.Any'.
+    usesFFI :: Bool,
+    -- | Locations of strings that appear to perform string interpolation.
     interpolatedStrings :: Set SourceSpan
   }
   deriving (Eq, Show)
@@ -39,6 +43,7 @@ instance Monoid ModuleInfo where mempty = ModuleInfo False mempty
 tell :: ModuleInfo -> Convert ()
 tell m = modify (mappend m)
 
+-- | The central PureScript-to-Nix conversion function for a single PureScript module.
 convert :: Module Ann -> (N.Expr, ModuleInfo)
 convert (Module spn _comments name path imports exports reexports foreign' decls) =
   flip runState mempty $
@@ -202,6 +207,9 @@ string str = do
     tell mempty {interpolatedStrings = S.singleton spn}
   pure decoded
   where
+    -- Performs a _very_ rudimentary check for interpolation:
+    -- Simply checks if "${" occurs in the string, and if so, there's a "}" occurring later in the string.
+    -- This does not account for any possible escaping/quoting.
     mightContainInterpolation :: Text -> Bool
     mightContainInterpolation t = case indices "${" t of
       [] -> False

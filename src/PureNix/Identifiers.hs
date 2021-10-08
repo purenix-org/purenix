@@ -2,16 +2,22 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
--- | This module defines the conversions from purescript identifiers to (pure)nix identifiers.
--- Nix's rules for identifiers are strictly more lenient than purescripts (see specifications below), since nix allows - in non-head characters.
--- This makes it so that in general, we can just convert identifiers.
--- However, there are a number of edge cases that need to be handled:
---  - generated dictionary names will contain '$'
---  - module names contain '.'
---  - we should not shadow "builtins", or identifiers starting with "__". There are of course more identifiers, that could techincally be shadowed, but they tend to overlap with purescript's.
+-- | This module defines the types and conversions from PureScript/CoreFn identifiers to Nix identifiers.
+-- This can be a tricky problem, since all three languages have different rules for what is and isn't allowed in certain kinds of identifiers.
+-- The goal of this module is to provide an API that takes care of all those concerns.
+-- In other words, the types in this module are as close to ready-to-print as possible.
 --
--- In general, once a purescript construct has been converted into a Key/Var, no more work is required.
--- That is, after turning them into Text, they can be used directly by the printer, no more work needs to be done to escape them.
+-- The reasoning is that 'Key' and 'Var' are intended to be used in 'Expr'.
+-- 'Expr' should represent a _valid_ Nix expression, and therefore 'Key' and 'Var' need to represent valid keys and binders, respectively.
+-- We don't have to care about rejecting nonsensical values during printing.
+--
+-- Nix's rules for naked (non-quoted) identifiers are strictly more lenient than PureScripts (see links to specifications below), since nix allows '-' in identifiers (they cannot start with a '-' though).
+-- Unfortunately, that doesn't mean we can just naively convert identifiers, for example:
+--  - generated identifiers such as dictionary names in CoreFn can contain '$'
+--  - module names can contain '.'
+--  - keys might be quoted
+--  - we shouldn't shadow Nix keywords, especially those that aren't also PureScript keywords
+--  - we reserve any identifier starting with two leading underscores
 --
 -- Purescript identifiers:
 -- https://github.com/purescript/purescript/blob/master/lib/purescript-cst/src/Language/PureScript/CST/Lexer.hs#L689
@@ -40,6 +46,9 @@ import qualified Language.PureScript as PS
 import qualified Language.PureScript.PSString as PS
 
 -- TODO rename to Binder, since this can occur in the LHS of a let-binding
+
+-- | A valid (i.e. containing no illegal characters) variable binder.
+-- Primarily constructed using 'mkVar'.
 newtype Var = UnsafeVar {unVar :: Text}
   deriving newtype (IsString, Eq, Show)
 
@@ -53,6 +62,13 @@ identToText (PS.Ident t) = t
 identToText (PS.GenIdent mvar n) = fromMaybe "__instance" mvar <> T.pack (show n)
 identToText PS.UnusedIdent = error "impossible"
 
+-- | Make a Nix variable binder from a CoreFn binder.
+--
+-- If a binder is a Nix keyword, we tick the binder with a hyphen.
+-- Since PureScript does not allow binders to contain hyphens, this should be safe.
+--
+-- Additionally, CoreFn can put dollar signs in generated names.
+-- We simply drop leading dollar signs, and the rest we convert to hyphens.
 mkVar :: PS.Ident -> Var
 mkVar = UnsafeVar . removeDollarSigns . tickKeywords . identToText
   where
@@ -66,10 +82,9 @@ mkVar = UnsafeVar . removeDollarSigns . tickKeywords . identToText
 keywords :: Set Text
 keywords = Set.fromList (purenixIdents <> nixPrimops <> nixKeywords)
   where
-    -- These are keywords in either purenix or nix itself, and therefore shouldn't be shadowed.
-    -- We could silently rename, but that's fragile, so for now we just warn not to use these.
-    -- Note that with the exception of "builtins", everything without leading underscores are all keywords in purescript as well, so this shouldn't generally be an issue.
     purenixIdents = ["module", "foreign"]
+    -- These are not keywords in the sense that they can be shadowed
+    -- For example, let true = false; in true is valid Nix.
     nixPrimops = ["builtins", "import", "false", "true"]
     -- keywords in nix:
     -- https://github.com/NixOS/nix/blob/90b2dd570cbd8313a8cf45b3cf66ddef2bb06e07/src/libexpr/lexer.l#L115-L124
@@ -77,6 +92,7 @@ keywords = Set.fromList (purenixIdents <> nixPrimops <> nixKeywords)
     nixKeywords =
       ["if", "then", "else", "assert", "with", "let", "in", "rec", "inherit", "or"]
 
+-- | A valid Nix attribute key
 newtype Key = UnsafeKey {unKey :: Text}
   deriving newtype (IsString, Eq, Show)
 
