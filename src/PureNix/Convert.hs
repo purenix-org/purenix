@@ -15,7 +15,7 @@ import Language.PureScript (Ident (..))
 import qualified Language.PureScript as P
 import Language.PureScript.CoreFn
 import Language.PureScript.Errors (SourceSpan)
-import Language.PureScript.PSString (PSString, decodeString)
+import Language.PureScript.PSString (PSString (toUTF16CodeUnits))
 import qualified PureNix.Expr as N
 import qualified PureNix.Identifiers as N
 import PureNix.Prelude
@@ -44,15 +44,6 @@ convert (Module spn _comments name path imports exports reexports foreign' decls
   flip runStateT mempty $
     flip runReaderT (path, name, spn) $
       module' name imports exports reexports foreign' decls
-
-throw :: Text -> Convert a
-throw err = ask >>= throwError . format
-  where
-    format (fp, _, spn) =
-      T.unlines
-        [ T.concat ["Error in ", T.pack fp, " at ", P.displayStartEndPosShort spn, ":"],
-          err
-        ]
 
 localSpan :: SourceSpan -> Convert a -> Convert a
 localSpan spn = local (fmap $ const spn)
@@ -204,13 +195,12 @@ attrs = fmap (N.attrs [] []) . traverse attr
     attr (string, body) = (N.stringKey string,) <$> expr body
 
 string :: PSString -> Convert Text
-string str = case decodeString str of
-  Nothing -> throw "String contained lone surrogates"
-  Just x -> do
-    when (mightContainInterpolation x) $ do
-      (_, _, spn) <- ask
-      tell mempty {interpolatedStrings = S.singleton spn}
-    pure x
+string str = do
+  let decoded = T.pack . map (toEnum . fromIntegral) . toUTF16CodeUnits $ str
+  when (mightContainInterpolation decoded) $ do
+    (_, _, spn) <- ask
+    tell mempty {interpolatedStrings = S.singleton spn}
+  pure decoded
   where
     mightContainInterpolation :: Text -> Bool
     mightContainInterpolation t = case indices "${" t of
