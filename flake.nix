@@ -1,5 +1,5 @@
 {
-  description = "purenix";
+  description = "PureNix";
 
   inputs.haskellNix.url = "github:input-output-hk/haskell.nix";
   inputs.nixpkgs.follows = "haskellNix/nixpkgs-unstable";
@@ -9,31 +9,20 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         overlay = self: _: {
-          hsPkgs =
-            self.haskell-nix.project' rec {
-              projectFileName = "stack.yaml";
-              src = ./.;
-              compiler-nix-name = "ghc8104";
-              shell = {
-                tools = {
-                  cabal = { };
-                  ghcid = { };
-                  haskell-language-server = { };
-                  hlint = { };
-                  ormolu = { };
-                };
-                ## ormolu that uses ImportQualifiedPost.
-                ## To use, remove ormolu from the shell.tools section above, and uncomment the following lines.
-                # buildInputs =
-                #   let
-                #     ormolu = pkgs.haskell-nix.tool compiler-nix-name "ormolu" "latest";
-                #     ormolu-wrapped = pkgs.writeShellScriptBin "ormolu" ''
-                #       ${ormolu}/bin/ormolu --ghc-opt=-XImportQualifiedPost $@
-                #     '';
-                #   in
-                #   [ ormolu-wrapped ];
+          hsPkgs = self.haskell-nix.project' {
+            projectFileName = "stack.yaml";
+            src = ./.;
+            compiler-nix-name = "ghc8104";
+            shell = {
+              tools = {
+                cabal = { };
+                ghcid = { };
+                haskell-language-server = { };
+                hlint = { };
+                ormolu = { };
               };
             };
+          };
         };
         pkgs = import nixpkgs {
           inherit system;
@@ -52,7 +41,7 @@
         # defined above.  You also get purs and spago that can be used for
         # testing out purenix.
         devShell = flake.devShell.overrideAttrs (oldAttrs: {
-          nativeBuildInputs = (oldAttrs.nativeBuildInputs or [ ]) ++ [
+          nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [
             pkgs.hsPkgs.hsPkgs.purescript.components.exes.purs
             pkgs.spago
           ];
