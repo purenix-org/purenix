@@ -24,7 +24,7 @@ import PureNix.Prelude
 type Convert =
   ReaderT
     (FilePath, P.ModuleName, SourceSpan)
-    (StateT ModuleInfo (Either Text))
+    (State ModuleInfo)
 
 data ModuleInfo = ModuleInfo
   { usesFFI :: Bool,
@@ -39,9 +39,9 @@ instance Monoid ModuleInfo where mempty = ModuleInfo False mempty
 tell :: ModuleInfo -> Convert ()
 tell m = modify (mappend m)
 
-convert :: Module Ann -> Either Text (N.Expr, ModuleInfo)
+convert :: Module Ann -> (N.Expr, ModuleInfo)
 convert (Module spn _comments name path imports exports reexports foreign' decls) =
-  flip runStateT mempty $
+  flip runState mempty $
     flip runReaderT (path, name, spn) $
       module' name imports exports reexports foreign' decls
 

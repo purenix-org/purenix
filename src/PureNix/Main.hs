@@ -6,7 +6,6 @@ import qualified Data.Aeson as Aeson
 import Data.Aeson.Types (parseEither)
 import Data.Foldable (toList)
 import Data.List (intercalate)
-import qualified Data.Text as T
 import qualified Data.Text.Lazy.IO as TL
 import qualified Language.PureScript.CoreFn as P
 import Language.PureScript.CoreFn.FromJSON (moduleFromJSON)
@@ -29,7 +28,7 @@ defaultMain = do
     let file = dir </> "corefn.json"
     value <- Aeson.eitherDecodeFileStrict file >>= either Sys.die pure
     (_version, module') <- either Sys.die pure $ parseEither moduleFromJSON value
-    (nix, ModuleInfo usesFFI interpolations) <- either (Sys.die . T.unpack) pure $ convert module'
+    let (nix, ModuleInfo usesFFI interpolations) = convert module'
     TL.writeFile (dir </> "default.nix") (renderExpr nix)
     let modulePath = P.modulePath module'
         foreignSrc = workdir </> FP.replaceExtension modulePath "nix"
