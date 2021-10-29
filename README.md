@@ -80,22 +80,36 @@ There are a couple things to notice here:
 
 ## Usage
 
-### Compiling with PureNix
-
 The easiest way to use PureNix is through Spago.
 Simply set `backend = "purenix"`, make sure `purenix` is available in the `PATH`, and build as normal.
 
 When you run `purenix`, manually or through Spago, it will look for the Purescript output directory `./output` in the current working directory.
 It then traverses this directory structure, looks for Purescript's intermediate `corefn.json` files, transpiles the `corefn.json` files to the equivalent Nix code, and writes the output Nix code to `default.nix`.
 
-### Laziness
+## Warnings
 
-PureScript is a strict language, or more specifically, assumes that its backends perform strict evaluation.
-Nix is a lazy language however, and we make no attempt to reconcile this in any way.
-This normally doesn't cause any issues, and in fact allows you to write more Haskell-like code than you usually would in PureScript.
+### What PureNix is and is not
 
-There are two things to watch out for, though:
+PureNix allows you to write code in PureScript, and then compile to Nix.
+The degree to which you can replace existing Nix code depends on how well you can express that code in PureScript.
+For some things, that's pretty easy, but there are many things in Nix and nixpkgs that are much harder to provide (useful) types for.
+As such, PureNix is _not_ a complete typed replacement for Nix.
+The goal for now is simply to allow you to take code that's tricky to write in an untyped language, and write it in a typed language instead.
 
-  - Like in every lazy language, you need to watch out for space leaks caused by accidentally building up large thunks. Purescript does not natively have tools to deal with laziness like bang patterns or `seq`, but you can pull in `builtins.seq` through the FFI.
+[The ecosystem around PureNix](https://github.com/purenix-org) is currently focused on providing PureNix ports of existing PureScript libraries.
+Over time, we hope to expand in the other direction as well, with libraries that provide typed versions of Nix-only constructs, thereby expanding the amount of Nix you can feasibly replace with PureNix, but there's still a lot to be done.
+Any help is welcome!
 
-  - Haskell often relies on tail call optimization to make long-running lazy programs use constant memory, which Nix does not support. If you end up writing long-running programs, like a parser that needs to process very large files, you might have to rewrite it in a way that minimizes recursion.
+### Laziness and memory management
+
+PureScript generally assumes that its backends perform strict evaluation, and some degree of memory management.
+Nix is a lazy language however, and is happy to leak memory.
+For most use cases this doesn't cause any issues, and in fact the laziness fact allows you to write more Haskell-like code than you usually would in PureScript.
+
+Still, it's good to keep these things in mind:
+
+- Like in every lazy language, you need to watch out for space leaks caused by accidentally building up large thunks.
+  PureScript does not natively have tools to deal with laziness, like bang patterns or `seq`, but you can define them yourself by e.g. pulling in `builtins.seq` through the FFI.
+
+- Long-running programs may run out of memory due to the lack of garbage collection and tail recursion.
+  If you end up writing long-running programs, like a parser that needs to process very large files, you might have to rewrite it in a way that minimizes recursion and allocation.
