@@ -104,7 +104,7 @@ Any help is welcome!
 
 PureScript generally assumes that its backends perform strict evaluation, and some degree of memory management.
 Nix is a lazy language however, and is happy to leak memory.
-For most use cases this doesn't cause any issues, and in fact the laziness fact allows you to write more Haskell-like code than you usually would in PureScript.
+For most use cases this doesn't cause any issues, and in fact the laziness allows you to write more Haskell-like code than you usually would in PureScript.
 
 Still, it's good to keep these things in mind:
 
