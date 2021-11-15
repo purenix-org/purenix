@@ -13,6 +13,17 @@ PureNix has full support for all of PureScript's features, including data types,
 
 On the [organization page for PureNix](https://github.com/purenix-org) you will find a number of packages intended to be used with PureNix, including ports of libraries like [purescript-prelude](https://github.com/purenix-org/purescript-prelude).
 
+## Usage
+
+The easiest way to use PureNix is through Spago.
+Simply set `backend = "purenix"`, make sure `purenix` is available in the `PATH`, and build as normal.
+
+When you run `purenix`, manually or through Spago, it will look for the Purescript output directory `./output` in the current working directory.
+It then traverses this directory structure, looks for Purescript's intermediate `corefn.json` files, transpiles the `corefn.json` files to the equivalent Nix code, and writes the output Nix code to `default.nix`.
+
+See [this post](https://discourse.nixos.org/t/purenix-nix-backend-for-purescript/15756/3) on the NixOS Discourse for more in-depth instructions.
+
+
 ## Code sample
 
 PureScript source, `Main.purs`:
@@ -48,19 +59,19 @@ Generated Nix:
 
 ```nix
 let
-  module = 
+  module =
     { "Data.A" = import ../Data.A;
       "Data.B" = import ../Data.B;
     };
   foreign = import ./foreign.nix;
   add = foreign.add;
   Nothing = {__tag = "Nothing";};
-  Just = value0: 
+  Just = value0:
     { __tag = "Just";
       __field0 = value0;
     };
   greeting = "Hello, world!";
-  fromMaybe = v: v1: 
+  fromMaybe = v: v1:
     let
       __pattern0 = __fail: if v1.__tag == "Nothing" then let a = v; in a else __fail;
       __pattern1 = __fail: if v1.__tag == "Just" then let a = v1.__field0; in a else __fail;
@@ -78,13 +89,11 @@ There are a couple things to notice here:
 - Data constructors from sum types are available to easily work with in the output Nix file, like `Just` and `Nothing`, although you might want to define named field accessors.
 - Foreign imports are straightforward to define and use, like in `add` and `foo`. The FFI file gets copied into the module's output directory as `foreign.nix`.
 
-## Usage
+## Development
 
-The easiest way to use PureNix is through Spago.
-Simply set `backend = "purenix"`, make sure `purenix` is available in the `PATH`, and build as normal.
-
-When you run `purenix`, manually or through Spago, it will look for the Purescript output directory `./output` in the current working directory.
-It then traverses this directory structure, looks for Purescript's intermediate `corefn.json` files, transpiles the `corefn.json` files to the equivalent Nix code, and writes the output Nix code to `default.nix`.
+You can launch a development shell with the command `nix develop` (as long as you have flakes support enabled in Nix).
+This puts you in a Nix shell with `cabal-install` and GHC setup to compile PureNix, as well as other helpful tools like HLint, HLS, PureScript, Spago, etc.
+From here you should be able to run commands like `cabal build` in order to build PureNix.
 
 ## Warnings
 
