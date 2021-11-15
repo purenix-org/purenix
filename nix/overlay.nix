@@ -43,6 +43,7 @@ final: prev: {
     nativeBuildInputs = [
       final.cabal-install
       final.ghcid
+      final.haskellPackages.haskell-language-server
       final.hlint
       final.purescript
       final.ormolu
