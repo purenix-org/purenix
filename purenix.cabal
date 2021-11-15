@@ -48,7 +48,7 @@ library
     , microlens-platform
     , mtl
     , pretty-simple
-    , purescript          ==0.14.4
+    , purescript          >= 0.14.4 && < 0.15
     , purescript-cst
     , text
 
