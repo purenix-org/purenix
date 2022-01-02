@@ -21,8 +21,7 @@ Simply set `backend = "purenix"`, make sure `purenix` is available in the `PATH`
 When you run `purenix`, manually or through Spago, it will look for the Purescript output directory `./output` in the current working directory.
 It then traverses this directory structure, looks for Purescript's intermediate `corefn.json` files, transpiles the `corefn.json` files to the equivalent Nix code, and writes the output Nix code to `default.nix`.
 
-See [this post](https://discourse.nixos.org/t/purenix-nix-backend-for-purescript/15756/3) on the NixOS Discourse for more in-depth instructions.
-
+See the [Getting Started Guide](./docs/quick-start.md) for more in-depth instructions.
 
 ## Code sample
 
@@ -85,7 +84,7 @@ in
 
 There are a couple things to notice here:
 
-- PureScript built-in types like `String`, `Int`, objects, and lists are converted to their corresponding Nix types, as in `greeting`.
+- PureScript built-in types like `String`, `Int`, records, and lists are converted to their corresponding Nix types, as in `greeting`.
 - Data constructors from sum types are available to easily work with in the output Nix file, like `Just` and `Nothing`, although you might want to define named field accessors.
 - Foreign imports are straightforward to define and use, like in `add` and `foo`. The FFI file gets copied into the module's output directory as `foreign.nix`.
 
