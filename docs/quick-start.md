@@ -1,8 +1,8 @@
 # Quick Start
 
-Here's a quick-start guide for playing around with PureNix.
+Here's a quick-start guide for seting up a PureNix project.
 
-In general, I recommend you take a look at some of our libraries to see exactly
+If something is unclear, you can always take a look at some of our libraries to see exactly
 how they are packaged, and copy what they do.  For instance,
 [`purescript-foldable-traversable`](https://github.com/purenix-org/purescript-foldable-traversable)
 or [`purescript-maybe`](https://github.com/purenix-org/purescript-maybe).
@@ -34,7 +34,7 @@ $ cd my-cool-project/
 $ spago init
 ```
 
-This creates a few files.  You'll need to edit some of these files in order to
+This creates a template project.  You'll need to edit some of these files in order to
 work with PureNix.
 
 ## Edit files
