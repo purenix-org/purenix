@@ -5,10 +5,6 @@ Here's a quick-start guide for seting up a PureNix project.
 If something is unclear, you can always take a look at some of our libraries to see exactly how they are packaged, and copy what they do.
 For instance, [`purescript-foldable-traversable`](https://github.com/purenix-org/purescript-foldable-traversable) or [`purescript-maybe`](https://github.com/purenix-org/purescript-maybe).
 
-Currently, we only have a [temporary package set](https://github.com/purenix-org/temp-package-set).
-This post will explain how to get started with using it.
-There is an [open issue](https://github.com/purenix-org/purenix/issues/36) about creating an actual package set.
-
 ## Creating a development shell
 
 The PureNix flake exposes a development shell with tools like [PureScript](https://github.com/purescript/purescript), [Spago](https://github.com/purescript/spago), and PureNix.
@@ -50,15 +46,13 @@ This is pointing to the official PureScript package set, but you'll need to chan
 
 ```dhall
 let upstream =
-      https://raw.githubusercontent.com/purenix-org/temp-package-set/cf5984ed43685ced920cc2c5317d6eb17851bba3/packages.dhall
+      https://raw.githubusercontent.com/purenix-org/temp-package-set/4161ef177916d7dbf454ea7bcacd1698544d89c7/packages.dhall
 
 in  upstream
 ```
 
-You may want to use a more recent commit, but be warned that not all packages work in all commits.
-The package set is currently a work-in-progress.
-Please open an issue on <https://github.com/purenix-org/temp-package-set> if something is not working or you'd like to add one of your own packages.
-See <https://github.com/purescript/package-sets> for what a proper PureScript package set looks like.
+You may want to change the commit to be the [most recent commit from `temp-package-set`](https://github.com/purenix-org/temp-package-set/commits/main).
+See the section at the bottom of this document for more information about package sets.
 
 (Note that `spago` will automatically add the `sha256:XXX` integrity check the first time you run `spago build`.)
 
@@ -161,10 +155,32 @@ A simple `flake.nix` may look like the following:
 
 With this in place, you can enter the dev shell just by running `nix develop`.
 
+## A Note about Package Sets
+
+A PureScript package set is a set of PureScript packages that are known to all compile and be useable together.
+PureScript package sets are very similar to Haskell [Stackage](https://www.stackage.org/) resolvers.
+
+The main [PureScript Package Sets repo](https://github.com/purescript/package-sets) is for the JavaScript backend.
+All the packages in this package set are meant to compile to JavaScript code.
+The PureScript Package Sets repo has a workflow and CI actions that make it easy for users to add new packages to the package set, upgrade existing packages, and make new releases of the package set itself.
+
+In order to use a package set when compiling with PureNix, you need to specify a PureNix-compatible package set.
+Currently, we only have a [temporary package set](https://github.com/purenix-org/temp-package-set) for PureNix.
+This package set pins all packages to their `master` branch.
+There are no workflows or CI actions for adding packages, upgrading existing packages, etc.
+This is sufficient for getting started with PureNix, but not ideal for large-scale, serious use of PureNix.
+There is an [open issue](https://github.com/purenix-org/purenix/issues/36) about creating an actual package set if you'd like to help with getting this off the ground.
+Please open an issue or PR on <https://github.com/purenix-org/temp-package-set> if something is not working or you'd like to add one of your own packages.
+
+You can find more info about PureScript package sets in the following places:
+
+- The [PureScript Package Sets repo](https://github.com/purescript/package-sets) for the JavaScript backend
+- The [Spago README](https://github.com/purescript/spago)
+- The [PureScript Registry README](https://github.com/purescript/registry/) (which is supposed to be the eventual successor to PureScript package sets)
+
 ## Problems / Questions / PRs
 
-Feel free to open an issue or send a PR on
-<https://github.com/purenix-org/purenix>.
+Feel free to open an issue or send a PR on <https://github.com/purenix-org/purenix>.
 
 The PureNix compiler is currently very usable, but the surrounding package set still needs some work.
 We'd love to get more people to help out with improving both PureNix and the surrounding ecosystem!
