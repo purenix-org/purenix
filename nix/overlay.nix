@@ -48,6 +48,7 @@ final: prev: {
       final.purescript
       final.ormolu
       final.spago
+      final.bashInteractive # see: https://discourse.nixos.org/t/interactive-bash-with-nix-develop-flake/15486
     ];
   };
 
@@ -57,6 +58,11 @@ final: prev: {
       final.purenix
       final.purescript
       final.spago
+      final.dhall-lsp-server
+      final.nodePackages.purty
+      final.nodePackages.purescript-psa
+      final.nixpkgs-fmt
+      final.bashInteractive # See: https://discourse.nixos.org/t/interactive-bash-with-nix-develop-flake/15486
     ];
     dontUnpack = true;
     installPhase = "touch $out";
