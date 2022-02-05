@@ -28,6 +28,12 @@ jobs:
       - name: Build PureNix devShells
         run: nix build -L '.#devShells.x86_64-linux.hacking-on-purenix' '.#devShells.x86_64-linux.use-purenix'
 
+      - name: Run tests
+        run: |
+          cd test
+          nix develop '..#devShells.x86_64-linux.use-purenix' -c spago build
+          nix eval -f output/Tests suite
+
   cabal-build:
     name: Cabal GHC ${{ matrix.ghc }} on ${{ matrix.os }} (${{ matrix.required }})
     strategy:
