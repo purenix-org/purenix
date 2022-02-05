@@ -1,6 +1,8 @@
 ### Nix ###
 result
 
+test/output/*
+
 ### Haskell ###
 dist
 dist-*
