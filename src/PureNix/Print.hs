@@ -1,5 +1,6 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -11,6 +12,7 @@ module PureNix.Print (renderExpr) where
 import Data.Foldable (toList)
 import Data.List (intersperse)
 import Data.Semigroup (mtimesDefault)
+import qualified Data.Text as Text
 import Data.Text.Lazy.Builder (Builder)
 import qualified Data.Text.Lazy.Builder as TB
 import Lens.Micro.Platform
@@ -170,6 +172,14 @@ binder = text . unVar
 key :: Key -> Printer
 key = text . unKey
 
+ppString :: Text -> Printer
+ppString txt = char '"' <> text escaped <> char '"'
+  where
+    escaped = flip Text.concatMap txt $ \case
+      '\'' -> "\\"
+      '"' -> "\""
+      chr -> Text.singleton chr
+
 ppExpr :: Style -> ExprF Printer -> Printer
 ppExpr _ (Var v) = binder v
 ppExpr _ (Lam arg body) = text (unVar arg) <> ": " <> body
@@ -184,7 +194,7 @@ ppExpr _ (List []) = "[]"
 ppExpr sty (List l) = delimit sty '[' ']' $ sepBy newline l
 ppExpr _ (Sel a b) = a <> "." <> key b
 ppExpr _ (Path t) = text t
-ppExpr _ (String str) = string $ show str
+ppExpr _ (String str) = ppString str
 ppExpr _ (Int n) = string (show n)
 ppExpr _ (Double x) = string (show x)
 ppExpr Single (Cond c t f) = sepBy space ["if", c, "then", t, "else", f]
