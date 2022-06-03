@@ -1,7 +1,7 @@
 {
   description = "PureNix";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/haskell-updates";
   inputs.flake-utils.url = "github:numtide/flake-utils";
 
   outputs = inputs:
