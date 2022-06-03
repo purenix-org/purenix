@@ -26,7 +26,7 @@ final: prev: {
               filter = path: type:
                 with final.lib;
                 ! elem (baseNameOf path) filesToIgnore &&
-                ! any (flip hasPrefix (baseNameOf path)) [ "dist" ".ghc" ];
+                  ! any (flip hasPrefix (baseNameOf path)) [ "dist" ".ghc" ];
             };
 
           in
@@ -38,7 +38,7 @@ final: prev: {
     final.haskell.lib.compose.justStaticExecutables final.haskellPackages.purenix;
 
   hacking-on-purenix-shell = final.haskellPackages.shellFor {
-    withHoogle = false;
+    withHoogle = true;
     packages = hpkgs: [ hpkgs.purenix ];
     nativeBuildInputs = [
       final.cabal-install
