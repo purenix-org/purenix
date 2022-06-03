@@ -4,9 +4,12 @@ version:         1.0
 license:         BSD-3-Clause
 build-type:      Simple
 license-file:    LICENSE
+
 -- category:
 -- description:     description
-synopsis:        Nix backend for PureScript.  Transpile PureScript code to Nix.
+synopsis:
+  Nix backend for PureScript.  Transpile PureScript code to Nix.
+
 author:          Dennis Gosnell, Jonas Carpay
 maintainer:      Dennis Gosnell <cdep.illabout@gmail.com>
 copyright:       2021 Dennis Gosnell, Jonas Carpay
@@ -48,8 +51,7 @@ library
     , microlens-platform
     , mtl
     , pretty-simple
-    , purescript          >= 0.14.4 && < 0.15
-    , purescript-cst
+    , purescript          ^>=0.15
     , text
 
 executable purenix

@@ -111,7 +111,7 @@ expr (App ann f x) = localAnn ann $ liftA2 N.app (expr f) (expr x)
 expr (Var ann (P.Qualified mqual name)) = localAnn ann $ do
   (_, thisModule, _) <- ask
   pure $ case mqual of
-    Just qual
+    P.ByModuleName qual
       | qual /= thisModule -> N.sel (N.sel (N.var "module") (N.moduleKey qual)) (N.identKey name)
     _ -> N.var (N.mkVar name)
 expr (Accessor ann sel body) = localAnn ann $ flip N.sel (N.stringKey sel) <$> expr body
