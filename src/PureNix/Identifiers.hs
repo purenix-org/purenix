@@ -1,6 +1,8 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PackageImports #-}
 
 -- | This module defines the types and conversions from PureScript/CoreFn identifiers to Nix identifiers.
 -- This can be a tricky problem, since all three languages have different rules for what is and isn't allowed in certain kinds of identifiers.
@@ -43,7 +45,12 @@ import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Language.PureScript as PS
-import qualified Language.PureScript.PSString as PS
+
+#if MIN_VERSION_purescript(0,15,0)
+import qualified "purescript" Language.PureScript.PSString as PS
+#else
+import qualified "purescript-cst" Language.PureScript.PSString as PS
+#endif
 
 -- TODO rename to Binder, since this can occur in the LHS of a let-binding
 
@@ -61,6 +68,10 @@ identToText (PS.Ident t) = t
 -- https://github.com/purescript/purescript/pull/4096
 identToText (PS.GenIdent mvar n) = fromMaybe "__instance" mvar <> T.pack (show n)
 identToText PS.UnusedIdent = error "impossible"
+
+#if MIN_VERSION_purescript(0,15,0)
+identToText (PS.InternalIdent _) = error "impossible"
+#endif
 
 -- | Make a Nix variable binder from a CoreFn binder.
 --
