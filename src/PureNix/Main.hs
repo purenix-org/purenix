@@ -22,7 +22,7 @@ defaultMain :: IO ()
 defaultMain = do
   let workdir = "."
   let moduleRoot = workdir </> "output"
-  moduleDirs <- filter (/= "cache-db.json") <$> Dir.listDirectory moduleRoot
+  moduleDirs <- filter (not . FP.isExtensionOf "json") <$> Dir.listDirectory moduleRoot
   forM_ moduleDirs $ \rel -> do
     let dir = moduleRoot </> rel
     let file = dir </> "corefn.json"
