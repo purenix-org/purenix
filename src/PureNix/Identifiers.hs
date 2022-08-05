@@ -60,7 +60,7 @@ identToText (PS.Ident t) = t
 -- This was relaxed in 0.14.2:
 -- https://github.com/purescript/purescript/pull/4096
 identToText (PS.GenIdent mvar n) = fromMaybe "__instance" mvar <> T.pack (show n)
-identToText PS.UnusedIdent = error "impossible"
+identToText PS.UnusedIdent = "_"
 identToText (PS.InternalIdent _) = error "impossible"
 
 -- | Make a Nix variable binder from a CoreFn binder.
