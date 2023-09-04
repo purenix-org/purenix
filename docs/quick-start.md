@@ -46,9 +46,10 @@ This is pointing to the official PureScript package set, but you'll need to chan
 
 ```dhall
 let upstream =
-      https://raw.githubusercontent.com/purenix-org/temp-package-set/4161ef177916d7dbf454ea7bcacd1698544d89c7/packages.dhall
+      https://raw.githubusercontent.com/purenix-org/temp-package-set/a14eb4db17fa84ed4d41aee16f6a18018f23ec64/packages.dhall
 
 in  upstream
+  with metadata.version = "v0.15.4"
 ```
 
 You may want to change the commit to be the [most recent commit from `temp-package-set`](https://github.com/purenix-org/temp-package-set/commits/main).
