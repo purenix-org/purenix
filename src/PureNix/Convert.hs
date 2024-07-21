@@ -5,6 +5,7 @@
 
 module PureNix.Convert (convert, ModuleInfo (..)) where
 
+import Control.Monad
 import Data.Bitraversable
 import qualified Data.Map as M
 import Data.Set (Set)

@@ -17,6 +17,7 @@ import qualified System.Exit as Sys
 import System.FilePath ((</>))
 import qualified System.FilePath as FP
 import System.IO
+import Control.Monad
 
 defaultMain :: IO ()
 defaultMain = do
