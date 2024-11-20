@@ -39,6 +39,8 @@ library
     PureNix.Expr
     PureNix.Identifiers
     PureNix.Main
+    PureNix.Main.Build
+    PureNix.Main.Run
     PureNix.Prelude
     PureNix.Print
 
@@ -51,6 +53,7 @@ library
     , microlens-platform
     , mtl
     , pretty-simple
+    , process
     , purescript          ^>=0.15
     , text
 
