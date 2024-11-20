@@ -51,7 +51,7 @@ library
     , microlens-platform
     , mtl
     , pretty-simple
-    , purescript          ^>=0.15
+    , purescript          >=0.15 && <0.15.12
     , text
 
 executable purenix
