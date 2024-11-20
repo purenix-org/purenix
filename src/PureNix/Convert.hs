@@ -54,7 +54,7 @@ localSpan :: SourceSpan -> Convert a -> Convert a
 localSpan spn = local (fmap $ const spn)
 
 localAnn :: Ann -> Convert a -> Convert a
-localAnn (spn, _, _, _) = localSpan spn
+localAnn (spn,  _, _) = localSpan spn
 
 {-# ANN module' ("hlint: ignore Use list comprehension" :: String) #-}
 module' ::
@@ -106,7 +106,7 @@ expr :: Expr Ann -> Convert N.Expr
 expr (Abs ann arg body) = localAnn ann $ fmap (N.lam (N.mkVar arg)) (expr body)
 expr (Literal ann lit) = localAnn ann $ literal lit
 -- Newtype wrappers can always be removed.
-expr (App ann (Var (_, _, _, Just IsNewtype) _) x) = localAnn ann (expr x)
+expr (App ann (Var ( _, _, Just IsNewtype) _) x) = localAnn ann (expr x)
 expr (App ann f x) = localAnn ann $ liftA2 N.app (expr f) (expr x)
 expr (Var ann (P.Qualified mqual name)) = localAnn ann $ do
   (_, thisModule, _) <- ask
@@ -116,7 +116,7 @@ expr (Var ann (P.Qualified mqual name)) = localAnn ann $ do
     _ -> N.var (N.mkVar name)
 expr (Accessor ann sel body) = localAnn ann $ flip N.sel (N.stringKey sel) <$> expr body
 expr (Let ann binds body) = localAnn ann $ liftA2 N.let' (bindings binds) (expr body)
-expr (ObjectUpdate ann a b) = localAnn ann $ liftA2 (N.bin N.Update) (expr a) (attrs b)
+expr (ObjectUpdate ann a _ b ) = localAnn ann $ liftA2 (N.bin N.Update) (expr a) (attrs b)
 expr (Constructor _ _ (P.ProperName dataName) fields) = pure $ N.constructor dataName (N.mkVar <$> fields)
 expr (Case ann exprs cases) =
   localAnn ann $ do
@@ -171,7 +171,7 @@ zipBinders exprs binds = mconcat <$> zipWithM unbinder binds exprs
 unbinder :: Binder Ann -> N.Expr -> Convert ([N.Expr], [(N.Var, N.Expr)])
 unbinder (NullBinder _) _ = pure mempty
 unbinder (VarBinder _ name) scrut = pure $ (\name' -> ([], [(name', scrut)])) $ N.mkVar name
-unbinder (ConstructorBinder (_, _, _, Just IsNewtype) _ _ [field]) scrut = unbinder field scrut
+unbinder (ConstructorBinder ( _, _, Just IsNewtype) _ _ [field]) scrut = unbinder field scrut
 unbinder (ConstructorBinder ann _ (P.Qualified _ (P.ProperName tag)) fields) scrut =
   localAnn ann $
     mappend ([N.bin N.Equals (N.sel scrut "__tag") (N.string tag)], []) . mconcat <$> zipWithM (\binder field -> unbinder binder (N.sel scrut field)) fields (N.numberedKeys "__field")

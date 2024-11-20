@@ -47,7 +47,14 @@ data ExprF f
   | Path Text
   deriving stock (Functor, Foldable, Traversable, Show)
 
-data Op = Update | Equals | And
+-- | Nix binary operators
+data Op =
+  -- | nix @//@ operator (right-side keys overwrite left side attrset)
+  Update |
+  -- | nix @==@ operator (equality)
+  Equals |
+  -- | nix @&&@ operator (boolean @and@)
+  And
   deriving (Eq, Show)
 
 foldExpr :: (ExprF r -> r) -> Expr -> r
