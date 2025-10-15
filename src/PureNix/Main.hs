@@ -2,6 +2,7 @@
 
 module PureNix.Main where
 
+import Control.Monad (forM_, unless)
 import qualified Data.Aeson as Aeson
 import Data.Aeson.Types (parseEither)
 import Data.Foldable (toList)
